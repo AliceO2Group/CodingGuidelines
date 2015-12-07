@@ -1,0 +1,2827 @@
+<HTML xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcq="http://purl.org/dc/qualifiers/1.0/" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:fn="http://www.w3.org/2005/xpath-functions">
+<HEAD>
+<TITLE>ALICE O² C++ Coding Guidelines</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<LINK HREF="http://www.google.com/favicon.ico" type="image/x-icon" rel="shortcut icon">
+<LINK HREF="styleguide.css" type="text/css" rel="stylesheet">
+<SCRIPT language="javascript" type="text/javascript">
+
+                function GetElementsByName(name) {
+                  // Workaround a bug on old versions of opera.
+                  if (document.getElementsByName) {
+                    return document.getElementsByName(name);
+                  } else {
+                    return [document.getElementById(name)];
+                  }
+                }
+
+		/**
+                 * @param {string} bodyName The body name.
+		 * @param {string} buttonName The button name.
+                 * @param {function(boolean): boolean} getVisibility Computes the new
+                 *     visibility state, given the current one.
+                 */
+		function ChangeVisibility(bodyName, buttonName, getVisibility) {
+                  var bodyElements = GetElementsByName(bodyName);
+                  var linkElement = GetElementsByName('link-' + buttonName)[0];
+                  if (bodyElements.length != 1) {
+                    throw Error('ShowHideByName() got the wrong number of bodyElements:  ' + 
+                        bodyElements.length);
+                  } else {
+                    var bodyElement = bodyElements[0];
+                    var buttonElement = GetElementsByName(buttonName)[0];
+                    var isVisible = bodyElement.style.display != "none";
+                    if (getVisibility(isVisible)) {
+                      bodyElement.style.display = "inline";
+                      if(linkElement) linkElement.style.display = "block";
+                      buttonElement.innerHTML = '▽';
+                    } else {
+                      bodyElement.style.display = "none";
+                      if(linkElement) linkElement.style.display = "none";
+                      buttonElement.innerHTML = '▶';
+                    }
+                  }
+                }
+
+                function ShowHideByName(namePrefix) {
+		  var bodyName = namePrefix + '__body';
+                  var buttonName = namePrefix + '__button';
+                  ChangeVisibility(bodyName, buttonName, function(old) { return !old; });
+                }
+
+                function ShowByName(namePrefix) {
+		  var bodyName = namePrefix + '__body';
+                  var buttonName = namePrefix + '__button';
+                  ChangeVisibility(bodyName, buttonName, function() { return true; });
+                }
+
+		function ToggleExtraByName(namePrefix) {
+		  var bodyName = namePrefix + '__extra_body';
+                  var buttonName = namePrefix + '__extra_button';
+	          ChangeVisibility(bodyName, buttonName, function(old) { return !old; });
+		}
+
+                function ShowHideAll() {
+                  var allButton = GetElementsByName("show_hide_all_button")[0];
+                  if (allButton.innerHTML == '▽') {
+                    allButton.innerHTML = '▶';
+                    SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "showhide_button", "none", '▶');
+                  } else {
+                    allButton.innerHTML = '▽';
+                    SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "showhide_button", "inline", '▽');
+                  }
+                }
+
+              function ShowHideAllExtra() { 
+                var allButton = GetElementsByName("show_hide_all_extra_button")[0];
+		// if you want to toggle also the summaries at the same time, uncomment these lines.
+		/*var allSummaries = GetElementsByName("show_hide_all_button")[0];
+		if(allButton.innerHTML == allSummaries.innerHTML) {
+                  ShowHideAll();
+		}*/
+		if (allButton.innerHTML == '▽') {
+                    allButton.innerHTML = '▶';
+                    SetHiddenStateExtra(document.getElementsByTagName("body")[0].childNodes, "showhide_extrabutton", "none", '▶');
+                  } else {
+                    allButton.innerHTML = '▽';
+                    SetHiddenStateExtra(document.getElementsByTagName("body")[0].childNodes, "showhide_extrabutton", "inline", '▽');
+                  }
+                }
+
+                // Recursively sets state of all children
+                // of a particular node.
+                function SetHiddenState(root, buttonClass, newState, newButton) {
+                  for (var i = 0; i != root.length; i++) {
+                    SetHiddenState(root[i].childNodes, buttonClass, newState, newButton);
+                    if (root[i].className == buttonClass)  {
+                      root[i].innerHTML = newButton;
+                    }
+                    if (root[i].className == 'stylepoint_body' ||
+                        root[i].className == 'link_button')  {
+                      root[i].style.display = newState;
+                    }
+                  }
+                }
+
+		                // Recursively sets state of all children
+                // of a particular node.
+                function SetHiddenStateExtra(root, buttonClass, newState, newButton) {
+               	//console.log(" in sethiddenstateextra");
+		for (var i = 0; i != root.length; i++) {
+                    SetHiddenStateExtra(root[i].childNodes, buttonClass, newState, newButton);
+                    if (root[i].className == buttonClass)  {
+                      root[i].innerHTML = newButton;
+                    }
+                    if (root[i].className == 'stylepoint_extra')  {
+		//console.log(" in stylepoint_extra");
+                      root[i].style.display = newState;
+                    }
+                  }
+                }
+
+
+                function EndsWith(str, suffix) {
+                  var l = str.length - suffix.length;
+                  return l >= 0 && str.indexOf(suffix, l) == l;
+                }
+
+                function RefreshVisibilityFromHashParam() {
+                  var hashRegexp = new RegExp('#([^&#]*)$');
+                  var hashMatch = hashRegexp.exec(window.location.href);
+                  var anchor = hashMatch && GetElementsByName(hashMatch[1])[0];
+                  var node = anchor;
+                  var suffix = '__body';
+                  while (node) {
+                    var id = node.id;
+                    var matched = id && EndsWith(id, suffix);
+                    if (matched) {
+                      var len = id.length - suffix.length;
+                      ShowByName(id.substring(0, len));
+                      if (anchor.scrollIntoView) {
+                        anchor.scrollIntoView();
+                      }
+
+                      return;
+                    }
+                    node = node.parentNode;
+                  }
+                }
+
+                window.onhashchange = RefreshVisibilityFromHashParam;
+
+                window.onload = function() {
+                  // if the URL contains "?showall=y", expand the details of all children
+                  var showHideAllRegex = new RegExp("[\\?&](showall)=([^&#]*)");
+                  var showHideAllValue = showHideAllRegex.exec(window.location.href);
+                  if (showHideAllValue != null) {
+                    if (showHideAllValue[2] == "y") {
+                      SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "showhide_button",
+                          "inline", '▽');
+                    } else {
+                      SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "showhide_button",
+                          "none", '▶');
+                    }
+                  }
+                  var showOneRegex = new RegExp("[\\?&](showone)=([^&#]*)");
+                  var showOneValue = showOneRegex.exec(window.location.href);
+                  if (showOneValue) {
+                    ShowHideByName(showOneValue[2]);
+                  }
+
+
+                  RefreshVisibilityFromHashParam();
+                }
+              </SCRIPT>
+</HEAD>
+<BODY>
+<H1>ALICE O² C++ Coding Guidelines</H1>
+
+<address>
+Vasco Barroso<br>
+Alina GrigoraȘ<br>
+Ivana Hřivnáčová<br>
+Matthias Kretz<br>
+Adriana Telesca<br>
+Barthélémy von Haller<br>
+</address>
+
+<p align="right">
+This document is based on the work of <br>
+B. Weinberger, C. Silverstein,  <br>
+G. Eitzmann, M. Mentovai <br>
+and T.Landray <br>
+at <a href="http://google-styleguide.googlecode.com"> http://google-styleguide.googlecode.com</a>, <br>
+C++ Google Style guide, Revision 3.274 <br>
+under the <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">CC-By 3.0 License</a>
+</p>
+
+
+<DIV style="margin-left: 50%; font-size: 75%;">
+<P>
+        Each style point has a summary for which additional information is available
+        by toggling the accompanying arrow button that looks this way:
+        <SPAN class="showhide_button" style="margin-left: 0; float: none">▶</SPAN>.
+        You may toggle all summaries with the big arrow button:
+      </P>
+<DIV style=" font-size: larger; margin-left: +2em;">
+<SPAN class="showhide_button" style="font-size: 180%; float: none" onclick="javascript:ShowHideAll()" name="show_hide_all_button" id="show_hide_all_button">▶</SPAN>
+        Toggle all summaries
+      </DIV>
+<DIV style=" font-size: larger; margin-left: +2em;">
+<SPAN class="showhide_extrabutton" style="font-size: 180%; float: none" onclick="javascript:ShowHideAllExtra()" name="show_hide_all_extra_button" id="show_hide_all_extra_button">▶</SPAN>
+        Toggle all extra details
+      </DIV>
+</DIV>
+<DIV class="toc">
+<DIV class="toc_title">Table of Contents</DIV>
+<TABLE>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Header_Files">Header Files</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#The__define_Guard">The #define Guard</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Forward_Declarations">Forward Declarations</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Inline_Functions">Inline Functions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Names_and_Order_of_Includes">Names and Order of Includes</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Namespaces">Namespaces</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#General_guideline">General guideline</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Using_declarations_and_directives">Using declarations and directives</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Unnamed_namespaces">Unnamed namespaces</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Namespace_aliases">Namespace aliases</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#std_namespace">std namespace</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Scoping">Scoping</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Nonmember_and_Global_Functions">Nonmember and Global Functions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Local_Variables">Local Variables</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Variables_Initialization">Variables Initialization</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Brace_Initialization">Brace Initialization</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Global_Variables">Global Variables</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Global_variables_initialization">Global variables initialization</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Static_Variables_in_functions">Static Variables in functions</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Classes">Classes</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Initialization">Initialization</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Virtual_functions_in_constructors_and_destructors">Virtual functions in constructors and destructors</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Explicit_Constructors">Explicit Constructors</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Copy__and_Move_">Copy (and Move)</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Delegating_and_inheriting_constructors">Delegating and inheriting constructors</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Structs_vs._Classes">Structs vs. Classes</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Destructors">Destructors</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Inheritance">Inheritance</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Multiple_Inheritance">Multiple Inheritance</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Interfaces">Interfaces</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Operator_Overloading">Operator Overloading</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Access_Control">Access Control</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Others">Others</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Exceptions">Exceptions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Use_of_const">Use of const</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Use_of_constexpr">Use of constexpr</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Smart_Pointers">Smart Pointers</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Magic_numbers">Magic numbers</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Preprocessor_Macros">Preprocessor Macros</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Write_Short_Functions">Write Short Functions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Run-Time_Type_Information__RTTI_">Run-Time Type Information (RTTI)</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Casting">Casting</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Variable-Length_Arrays_and_alloca__">Variable-Length Arrays and alloca()</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Increment_and_Decrement_operators">Increment and Decrement operators</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Loops_and_Switch_Statements">Loops and Switch Statements</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Integer_Types">Integer Types</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Portability">Portability</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#0_and_nullptr">0 and nullptr</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#sizeof">sizeof</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#auto">auto</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Exceptions_to_the_Rules">Exceptions to the Rules</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Existing_Non-conformant_Code">Existing Non-conformant Code</A></SPAN> </DIV></TD>
+</TR>
+</TABLE>
+</DIV>
+<DIV class="">
+<H2 name="Important_Note" id="Important_Note">Important Note</H2>
+  <DIV class="">
+<H3><A name="Displaying_Hidden_Details_in_this_Guide" id="Displaying_Hidden_Details_in_this_Guide">Displaying Hidden Details in this Guide</A></H3>
+<SPAN class="link_button" id="link-Displaying_Hidden_Details_in_this_Guide__button" name="link-Displaying_Hidden_Details_in_this_Guide__button"><A href="?showone=Displaying_Hidden_Details_in_this_Guide#Displaying_Hidden_Details_in_this_Guide">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Displaying_Hidden_Details_in_this_Guide')" name="Displaying_Hidden_Details_in_this_Guide__button" id="Displaying_Hidden_Details_in_this_Guide__button">▶</SPAN>
+     <DIV style="display:inline;" class="">
+       This style guide contains many details that are initially
+       hidden from view.  They are marked by the triangle icon, which you
+       see here on your left. The first level of hidden information is 
+       the subsection <i>Summary</i> in each rule and the second level of hidden information is the 
+       optional subsection <i>Extra details and exceptions to the rule</i>. Click the arrow on the 
+       left now, you should see "Hooray" appear below.
+     </DIV>
+     <DIV class=""><DIV class="stylepoint_body" name="Displaying_Hidden_Details_in_this_Guide__body" id="Displaying_Hidden_Details_in_this_Guide__body" style="display: none">
+       <p>
+        Hooray!  Now you know you can expand points to get more
+        details.  Alternatively, there are an "expand all summaries"
+	and an "expand all summaries and extra details" at the
+        top of this document.
+       </p>
+     </DIV></DIV>
+  </DIV>
+</DIV>
+<DIV class="">
+<H2 name="Background" id="Background">Background</H2>
+  <p>
+    As every C++ programmer knows, the language has many powerful features,
+    but this power brings with it complexity, which in turn can make code
+    more bug-prone and harder to read and maintain.
+  </p>
+  <p>
+    The goal of this guide is to manage this complexity by describing
+    in detail the dos and don'ts of writing C++ code. These rules exist to
+    keep
+
+    the
+    code base manageable while still allowing coders to use C++ language
+    features productively.
+  </p>
+  <p>
+    Another issue this guide addresses is that of C++ feature bloat.
+    C++ is a huge language with many advanced features. In some cases
+    we constrain, or even ban, use of certain features. We do this to
+    keep code simple and to avoid the various common errors and
+    problems that these features can cause.  This guide lists these
+    features and explains why their use is restricted.
+  </p>
+
+  <p>
+    Note that this guide is not a C++ tutorial: we assume that the
+    reader is familiar with the language.
+
+  </p>
+
+</DIV>
+
+
+<DIV class="">
+<H2 name="Header_Files" id="Header_Files">Header Files</H2>
+  <p>
+    In general, every <code>.cxx</code> file should have an associated
+    <code>.h</code> file. There are some common exceptions, such as
+
+    unittests
+    and small <code>.cxx</code> files containing just a <code>main()</code>
+    function.
+  </p>
+  <p>
+    Correct use of header files can make a huge difference to the
+    readability, size and performance of your code.
+  </p>
+  <p>
+    The following rules will guide you through the various pitfalls of
+    using header files.
+  </p>
+
+  <DIV class="">
+<H3><A name="The__define_Guard" id="The__define_Guard">The #define Guard</A></H3>
+<SPAN class="link_button" id="link-The__define_Guard__button" name="link-The__define_Guard__button"><A href="?showone=The__define_Guard#The__define_Guard">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('The__define_Guard')" name="The__define_Guard__button" id="The__define_Guard__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      All header files should have <code>#define</code> guards to
+      prevent multiple inclusion.  The format of the symbol name
+      should be
+      <code><i>&lt;PROJECT&gt;</i>_<i>&lt;PATH&gt;</i>_<i>&lt;FILE&gt;</i>_H_</code>.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="The__define_Guard__body" id="The__define_Guard__body" style="display: none">
+
+      <p>
+        To guarantee uniqueness, they should be based on the full path
+        in a project's source tree.  For example, the file
+        <code>foo/src/bar/myFile.h</code> in project <code>foo</code> should
+        have the following guard:
+      </p>
+      <DIV class=""><PRE>#ifndef FOO_BAR_MYFILE_H_
+#define FOO_BAR_MYFILE_H_
+
+...
+
+#endif  // FOO_BAR_MYFILE_H_</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Forward_Declarations" id="Forward_Declarations">Forward Declarations</A></H3>
+<SPAN class="link_button" id="link-Forward_Declarations__button" name="link-Forward_Declarations__button"><A href="?showone=Forward_Declarations#Forward_Declarations">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Forward_Declarations')" name="Forward_Declarations__button" id="Forward_Declarations__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+        You may forward declare ordinary classes in order to avoid
+        unnecessary <code>#include</code>s.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Forward_Declarations__body" id="Forward_Declarations__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+          A "forward declaration" is a declaration of a class, function,
+          or template without an associated definition. <code>#include</code>
+          lines can often be replaced with forward declarations of whatever
+          symbols are actually used by the client code.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        <ul>
+          <li>Unnecessary <code>#include</code>s force the compiler to open
+          more files and process more input.</li>
+          <li>They can also force your code to be recompiled more often, due
+          to changes in the header.</li>
+        </ul>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        <ul>
+          <li>It can be difficult to determine the correct form of a
+          forward declaration in the presence of features like templates,
+          typedefs, default parameters, and using declarations.</li>
+          <li>Forward declaring multiple symbols from a header can be more
+          verbose than simply including the header.</li>
+          <li>Forward declarations of functions and templates can prevent
+          the header owners from making otherwise-compatible changes to
+          their APIs; for example, widening a parameter type, or adding
+          a template parameter with a default value.</li>
+          <li>Forward declaring symbols from namespace <code>std::</code>
+          usually yields undefined behavior.</li>
+        </ul>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <ul>
+          <li>When using a function declared in a header file, always
+          <code>#include</code> that header.</li>
+          <li>When using a class template, prefer to <code>#include</code> its
+          header file.</li>
+          <li>When using an ordinary class, relying on a forward declaration
+          is OK, but be wary of situations where a forward declaration may
+          be insufficient or incorrect; when in doubt, just
+          <code>#include</code> the appropriate header.</li>
+          <li>Do not replace data members with pointers just to avoid an
+          <code>#include</code>.</li>
+        </ul>
+        Always <code>#include</code> the file that actually provides the
+        declarations/definitions you need; do not rely on the symbol being
+        brought in transitively via headers not directly included. One
+        exception is that <code>myFile.cxx</code> may rely on
+        <code>#include</code>s and forward declarations from its corresponding
+        header file <code>myFile.h</code>.
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Inline_Functions" id="Inline_Functions">Inline Functions</A></H3>
+<SPAN class="link_button" id="link-Inline_Functions__button" name="link-Inline_Functions__button"><A href="?showone=Inline_Functions#Inline_Functions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Inline_Functions')" name="Inline_Functions__button" id="Inline_Functions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      As a general rule, put function definitions into the <code>.cxx</code> file and let the compiler decide what gets inlined (it can decide anyway, regardless of the inline keyword).
+      Use inline when you require the implementation of a function in multiple translation units (e.g. template classes/functions).
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Inline_Functions__body" id="Inline_Functions__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        <p>
+          The inline keyword indicates that inline substitution of the function body at the point of call is to be preferred to the usual function call mechanism.
+          But a compiler is not required to perform this inline substitution at the point of call.
+        </p>
+        <p>
+          Functions that are defined within a class definition are implicitly inline.
+        </p>
+        <p>
+          An inline function must be defined in every translation unit from where it is called.
+          It is undefined behavior if the definition of the inline function is not the same for all translation units.
+          Note that this implies that the function is defined in a header file.
+          This can have an impact on compile time and lead to longer (= less efficient) development cycles.
+        </p>
+        <p>
+          Note that the inline keyword has no effect on the linkage of a function.
+          Linkage can be changed via unnamed namespaces or the static keyword.
+        </p>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          If you add a new function, put it into the <code>.cxx</code> file per default.
+          Small functions, like accessors and mutators may be placed into the <code>.h</code> file instead (<code>inline</code>).
+          Also, most template function implementations need to go into the <code>.h</code> file.
+          If you later determine that a function should be moved from the <code>.cxx</code> file into the <code>.h</code> file, please make sure that it helps the compiler in optimizing the code.
+          Otherwise you're just increasing compile time.
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Names_and_Order_of_Includes" id="Names_and_Order_of_Includes">Names and Order of Includes</A></H3>
+<SPAN class="link_button" id="link-Names_and_Order_of_Includes__button" name="link-Names_and_Order_of_Includes__button"><A href="?showone=Names_and_Order_of_Includes#Names_and_Order_of_Includes">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Names_and_Order_of_Includes')" name="Names_and_Order_of_Includes__button" id="Names_and_Order_of_Includes__button">▶</SPAN>
+  <DIV style="display:inline;" class="">
+    Include headers from external libraries using angle brackets. Include headers from your own project/libraries using double quotes.<br>
+    Do not rely on implicit includes. Make header files self-sufficient. <br>
+  </DIV>
+  <DIV class=""><DIV class="stylepoint_body" name="Names_and_Order_of_Includes__body" id="Names_and_Order_of_Includes__body" style="display: none">
+    <p>
+	  There are two types of #include statements: <code>#include &lt;myFile.h&gt;</code> and <code>#include “myFile.h”</code>.
+    </p>
+    <ul>
+      <li> Include headers from external libraries using angle brackets.
+        <DIV class=""><PRE>#include &lt;iostream&gt;
+#include &lt;QtCore/QDate&gt;
+#include &lt;zlib.h&gt;</PRE></DIV>
+      </li>
+      <li>
+        Include headers from your own project using double quotes.
+        <DIV class=""><PRE>#include "MyClass.h"</PRE></DIV>
+      </li>
+    </ul>
+    <p>
+      The header files of external libraries are obviously not in the
+        same directory as your source files. So you need to use angle brackets.
+    </p>
+    <p>
+        Headers of your own application have a defined relative location to the source
+        files of your application. Using double quotes, you have to specify the correct 
+        relative path to the include file.       
+    </p>
+
+    <i>Include order </i>
+    <p>
+      Another important aspect of include management is the include order.
+      Typically, you have a class named Foo, a file Foo.h and a file Foo.cxx .
+      The rule is :
+        In your file Foo.cxx, you should include Foo.h as the first include, before the system
+        includes.
+    </p>
+    <p>
+      The rationale behind that is to make your header standalone.
+    </p>
+    <p>
+      Let's imagine that your Foo.h looks like this:
+      <DIV class=""><PRE class="badcode">class Foo
+{
+  public:
+    Bar getBar();
+}</PRE></DIV>
+    </p>
+    <p>
+      And your Foo.cpp looks like this:
+      <DIV class=""><PRE class="badcode">#include "Bar.h"
+#include "Foo.h"</PRE></DIV>
+    </p>
+    <p>
+    Your Foo.cxx file will compile, but it will not compile for other people using Foo.h without including Bar.h. 
+    Including Foo.h first makes sure that your Foo.h header works for others.
+<DIV class=""><PRE>// Foo.h
+#include "Bar.h"
+class Foo
+{
+  public:
+    Bar getBar();
+}
+
+// Foo.cxx
+#include "Foo.h"</PRE></DIV>
+    </p>
+    <p>
+    For more details: <a href="http://techbase.kde.org/Policies/Library_Code_Policy#Getting_.23includes_right">Getting #includes right</a>.
+    </p>
+  </DIV></DIV>
+</DIV>
+
+</DIV>
+
+<DIV class="">
+<H2 name="Namespaces" id="Namespaces">Namespaces</H2>
+  <p>
+  Namespaces subdivide the global scope into distinct, named
+  scopes, and thus are useful for logically grouping related types and functions and
+  preventing name collisions.
+  </p>
+
+  <DIV class="">
+<H3><A name="General_guideline" id="General_guideline">General guideline</A></H3>
+<SPAN class="link_button" id="link-General_guideline__button" name="link-General_guideline__button"><A href="?showone=General_guideline#General_guideline">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('General_guideline')" name="General_guideline__button" id="General_guideline__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use a namespace for the project, a second nested namespace for code inside
+      a sub-project. Use one or two more nested namespaces to logically group types and functions together.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="General_guideline__body" id="General_guideline__body" style="display: none">
+    <p> 
+      Example of a typical class definition within a project and
+      sub-project namespace:
+    </p> 
+      <DIV class=""><PRE>namespace Project
+{
+namespace SubProject
+{
+
+class MyClass
+{
+...
+};
+
+} // namespace SubProject
+} // namespace Project</PRE></DIV>
+      <p> 
+        A nonmember function that is logically tied to a specific type should be in the
+        same namespace as that type.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Using_declarations_and_directives" id="Using_declarations_and_directives">Using declarations and directives</A></H3>
+<SPAN class="link_button" id="link-Using_declarations_and_directives__button" name="link-Using_declarations_and_directives__button"><A href="?showone=Using_declarations_and_directives#Using_declarations_and_directives">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Using_declarations_and_directives')" name="Using_declarations_and_directives__button" id="Using_declarations_and_directives__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Don't write namespace using declarations or using directives
+      in a header file or before an #include.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Using_declarations_and_directives__body" id="Using_declarations_and_directives__body" style="display: none">
+      <p>
+      <DIV class=""><PRE># include "Bar.h"
+// OK in .cxx after include statements
+using namespace Foo;
+
+// sometimes a using declaration is preferable, to be precise
+// about the symbols that get imported
+using Foo::Type;</PRE></DIV>
+      </p>
+      <p>
+      <DIV class=""><PRE class="badcode">// Forbidden in .h -- This pollutes the namespace.
+using namespace Foo;</PRE></DIV>
+      </p>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Using_declarations_and_directives')" name="Using_declarations_and_directives__extra_button" id="Using_declarations_and_directives__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Using_declarations_and_directives__extra_body">
+        The using directive can sometimes be useful in header files to import one namespace into another one.
+        This can effectively hide a namespace from the public interface, similar to what an inline namespace does.
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Unnamed_namespaces" id="Unnamed_namespaces">Unnamed namespaces</A></H3>
+<SPAN class="link_button" id="link-Unnamed_namespaces__button" name="link-Unnamed_namespaces__button"><A href="?showone=Unnamed_namespaces#Unnamed_namespaces">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Unnamed_namespaces')" name="Unnamed_namespaces__button" id="Unnamed_namespaces__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Unnamed namespaces are allowed and even encouraged in
+      <code>.cxx</code> files, they are not allowed in <code>.h</code>
+      files.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Unnamed_namespaces__body" id="Unnamed_namespaces__body" style="display: none">
+    <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+      All symbols inside an unnamed namespace (sometimes also called anonymous namespace)
+      will have internal linkage.
+      Thus, it is impossible to access these objects from other translation units (.cxx files).
+    </P>
+    <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+      Because of the internal linkage it is easier to reason about the code.
+      This can lead to better optimization from compilers and clearer encapsulation.
+    </P>
+    <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+      Use unnamed namespaces in <code>.cxx</code> files whenever possible.
+    </P>
+    <p>
+    <DIV class=""><PRE>namespace Project {
+namespace {                           // This is in a .cxx file.
+int someFunction(int value) { return value + 1; }
+}  // unnamed namespace
+
+void someOtherFunction() {
+  int value = 0;
+  value = someFunction(value);
+  ...
+}
+}</PRE></DIV>
+    For the above code the compiler can see that <code>someFunction</code> is called from only one place.
+    It can thus inline the code and drop <code>someFunction</code>.
+    </p>
+    <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Unnamed_namespaces')" name="Unnamed_namespaces__extra_button" id="Unnamed_namespaces__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Unnamed_namespaces__extra_body">
+      In some special cases an unnamed namespace can be useful in a header file.
+      Leave such decisions to architecture designers.
+    </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Namespace_aliases" id="Namespace_aliases">Namespace aliases</A></H3>
+<SPAN class="link_button" id="link-Namespace_aliases__button" name="link-Namespace_aliases__button"><A href="?showone=Namespace_aliases#Namespace_aliases">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Namespace_aliases')" name="Namespace_aliases__button" id="Namespace_aliases__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Namespace aliases are allowed anywhere in a <code>.cxx</code> file, 
+      inside the named namespace that wraps an entire <code>.h</code> 
+      file and in functions and methods.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Namespace_aliases__body" id="Namespace_aliases__body" style="display: none">
+<p>
+<DIV class=""><PRE>// Shorten access to some commonly used names in .cxx files.
+namespace Fbz = ::Foo::Bar::Baz;
+ 
+// Shorten access to some commonly used names (in a .h file).
+namespace Librarian {
+  // The following alias is available to all files including
+  // this header (in namespace Librarian):
+  // alias names should therefore be chosen consistently
+  // within a project.
+  namespace Pds = ::PipelineDiagnostics::Sidetable;
+
+  inline void myInlineFunction() {
+    // namespace alias local to a function (or method).
+    namespace Fbz = ::Foo::Bar::Baz;
+    ...
+  }
+}  // namespace Librarian</PRE></DIV>
+</p>
+      <p>
+      Note that an alias in a .h file is visible to everyone
+      including that file, so public headers (those available
+      outside a project) and headers transitively included by them,
+      should avoid defining aliases, as part of the general
+      goal of keeping public APIs as small as possible.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="std_namespace" id="std_namespace">std namespace</A></H3>
+<SPAN class="link_button" id="link-std_namespace__button" name="link-std_namespace__button"><A href="?showone=std_namespace#std_namespace">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('std_namespace')" name="std_namespace__button" id="std_namespace__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Do not declare anything in namespace <code>std</code>, not even forward
+      declarations of standard library classes.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="std_namespace__body" id="std_namespace__body" style="display: none">
+    
+    <p>
+     Declaring entities in namespace <code>std</code> represents undefined behavior,
+     i.e., not portable.  To declare entities from the standard library, include 
+     the appropriate header file.
+    </p>
+    
+    </DIV></DIV>
+  </DIV>
+
+</DIV>
+
+<DIV class="">
+<H2 name="Scoping" id="Scoping">Scoping</H2>
+
+  <DIV class="">
+<H3><A name="Nonmember_and_Global_Functions" id="Nonmember_and_Global_Functions">Nonmember and Global Functions</A></H3>
+<SPAN class="link_button" id="link-Nonmember_and_Global_Functions__button" name="link-Nonmember_and_Global_Functions__button"><A href="?showone=Nonmember_and_Global_Functions#Nonmember_and_Global_Functions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Nonmember_and_Global_Functions')" name="Nonmember_and_Global_Functions__button" id="Nonmember_and_Global_Functions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Nonmember functions (also known as global functions) should be 
+      within a namespace. 
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Nonmember_and_Global_Functions__body" id="Nonmember_and_Global_Functions__body" style="display: none">
+      <p>Putting nonmember functions in a namespace avoids polluting 
+      the global namespace. Static member functions are an alternative
+      as long as it makes sense to include the function within the 
+      class.</p>
+      <DIV class=""><PRE>namespace MyNamespace {
+  void doGlobalFoo(); // Good -- doGlobalFoo is within a namespace.
+  
+  class MyClass {
+    public: 
+      ...
+      // Good -- doGlobalBar is a static member of class MyClass and 
+      // has a reason to be part of this class (not shown here).
+      static Bar* doGlobalBar();
+  }</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Local_Variables" id="Local_Variables">Local Variables</A></H3>
+<SPAN class="link_button" id="link-Local_Variables__button" name="link-Local_Variables__button"><A href="?showone=Local_Variables#Local_Variables">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Local_Variables')" name="Local_Variables__button" id="Local_Variables__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Declare variables as locally as possible.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Local_Variables__body" id="Local_Variables__body" style="display: none">
+      
+      <p> Variables whose lifetime are longer than necessary have several 
+      drawbacks:
+      <ul>
+      <li>They make the code harder to understand and maintain.</li>
+      <li>They can't be always sensibly initialized.</li>
+      </ul>
+      </p>
+      
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Local_Variables')" name="Local_Variables__extra_button" id="Local_Variables__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Local_Variables__extra_body">
+      <ul>
+      <li>It can be sometimes more efficient to declare a variable (usually of an
+      object type) outside a loop.
+      <p>
+        If the variable is an object, its constructor is invoked every time 
+        it enters scope and is created, and its destructor is invoked every 
+        time it goes out of scope.
+      </p>
+      <DIV class=""><PRE class="badcode">// Inefficient implementation:
+for (int i = 0; i &lt; bigNumber; ++i) {
+  Foo foo;  // My ctor and dtor get called bigNumber times each.
+  foo.doSomething(i);
+}</PRE></DIV>
+      <p>
+        It may be more efficient to declare such a variable used in a
+        loop outside that loop:
+      </p>
+      <DIV class=""><PRE>Foo foo;  // My ctor and dtor get called once each.
+for (int i = 0; i &lt; bigNumber; ++i) {
+  foo.doSomething(i);
+}</PRE></DIV>
+      </li>
+      <li> This item does not apply to constants, because constants don't add a state.
+      </li>
+      </ul>
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Variables_Initialization" id="Variables_Initialization">Variables Initialization</A></H3>
+<SPAN class="link_button" id="link-Variables_Initialization__button" name="link-Variables_Initialization__button"><A href="?showone=Variables_Initialization#Variables_Initialization">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Variables_Initialization')" name="Variables_Initialization__button" id="Variables_Initialization__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Always initialize variables.<br>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Variables_Initialization__body" id="Variables_Initialization__body" style="display: none">
+      <p>
+       Do not separate initialization from declaration, e.g.
+      </p>
+      <DIV class=""><PRE class="badcode">int value;
+value = function();      // Bad -- initialization separate from declaration.</PRE></DIV>
+      <DIV class=""><PRE>int value = function();  // Good -- declaration has initialization.</PRE></DIV>
+
+      <p>
+        Use a default initial value or ? to reduce mixing data flow with control 
+        flow.
+      </p>
+      <DIV class=""><PRE class="badcode">int speedupFactor;       // Bad: does not initialize variable
+if (condition) {
+  speedupFactor = NoFactor;
+}
+else {
+  speedupFactor = DoubleFactor;
+}</PRE></DIV>
+      <DIV class=""><PRE>int speedupFactor = DoubleFactor; // Good: initializes variable
+if (condition) {
+  speedupFactor = NoFactor;
+}</PRE></DIV>
+      <DIV class=""><PRE>int speedupFactor = condition ? NoFactor : DoubleFactor; // Good: initializes variable</PRE></DIV>
+        
+      <p>
+        Prefer declaration of loop variables inside a loop, e.g.
+      </p>
+      <DIV class=""><PRE class="badcode">int i;                   // Bad: does not initialize variable
+for (i = 0; i &lt; number; ++i) {
+  doSomething(i);
+}</PRE></DIV>
+      <DIV class=""><PRE>for (int i = 0; i &lt; number; ++i) {
+  doSomething(i); // Good
+}</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+ <DIV class="">
+<SPAN class="cpp11_marker">since C++11</SPAN><H3><A name="Brace_Initialization" id="Brace_Initialization">Brace Initialization</A></H3>
+<SPAN class="link_button" id="link-Brace_Initialization__button" name="link-Brace_Initialization__button"><A href="?showone=Brace_Initialization#Brace_Initialization">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Brace_Initialization')" name="Brace_Initialization__button" id="Brace_Initialization__button">▶</SPAN>
+  <DIV style="display:inline;" class="">
+    Prefer initialization with braces except for single-argument assignment.
+  </DIV>
+  <DIV class=""><DIV class="stylepoint_body" name="Brace_Initialization__body" id="Brace_Initialization__body" style="display: none">
+    <p>In C++11, the brace initialization syntax for builtin arrays and POD structures has been extended for use with all other datatypes.
+    <p> Example of brace initialization:
+    </p>
+    <DIV class=""><PRE>std::vector&lt;std::string&gt; myVector{"alpha", "beta", "gamma"};</PRE></DIV>
+  </p>
+    <p>
+      Example of single-argument assignments:
+    </p>
+    <DIV class=""><PRE>int value = 3;                           // preferred style
+std::string name = "Some Name"; 
+  
+int value { 3 };                         // also possible
+std::string name{ "Some Name" }; 
+std::string name = { "Some Name" };</PRE></DIV>
+    <p>User data types can also define constructors that take
+    <code>initializer_list</code>, which is automatically created from
+    <i>braced-init-list</i>:
+      <DIV class=""><PRE>#include &lt;initializer_list&gt;
+class MyType {
+ public:
+  // initializer_list is a reference to the underlying init list,
+  // so it can be passed by value.
+  MyType(std::initializer_list&lt;int&gt; initList) {
+    for (int element : initList) { .. }
+  }
+};
+MyType myObject{2, 3, 5, 7};</PRE></DIV></p>
+
+    <p>Finally, brace initialization can also call ordinary constructors of
+    data types that do not have <code>initializer_list</code> constructors.
+      <DIV class=""><PRE>// Calls ordinary constructor as long as MyOtherType has no
+// initializer_list constructor.
+class MyOtherType {
+ public:
+  explicit MyOtherType(std::string name);
+  MyOtherType(int value, std::string name);
+};
+MyOtherType object1 = {1, "b"};
+// If the constructor is explicit, you can't use the "= {}" form.
+MyOtherType object2{"b"};</PRE></DIV></p>
+
+    <p>Never assign a <i>braced-init-list</i> to an auto local variable. In the
+    single element case, what this means can be confusing.
+      <DIV class=""><PRE class="badcode">auto value = {1.23};        // value is an initializer_list&lt;double&gt;</PRE></DIV>
+      <DIV class=""><PRE>auto value = double{1.23};  // Good -- value is a double, not an initializer_list.</PRE></DIV>
+    </p>
+
+    <p> For clarity of the examples above we use directly explicit values, however following
+    the rule about <a href="#Magic_Numbers">magic numbers</a> requires to define all such
+    numbers as named constants or <code>constexpr</code> first. </p>
+  </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Global_Variables" id="Global_Variables">Global Variables</A></H3>
+<SPAN class="link_button" id="link-Global_Variables__button" name="link-Global_Variables__button"><A href="?showone=Global_Variables#Global_Variables">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Global_Variables')" name="Global_Variables__button" id="Global_Variables__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Variables declared in the global scope are not allowed.  Other global variables, including 
+      static class variables and variables in namespace scope, should be 
+      avoided where other means of communication are possible.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Global_Variables__body" id="Global_Variables__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        A global variable is a variable that can be accessed (theoretically) from everywhere in the program.
+        The adjective "global" should rather be understood as concerning its linkage, not whether it is in the global scope.
+      <DIV class=""><PRE class="badcode">int gBar;           // this is obviously global
+class Something
+{
+  private:
+    static int sId; // but this one too (details at the end of the rule)
+};
+namespace NotGlobalScope {
+  Foo fooObject;    // and finally this one as well
+}</PRE></DIV>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        Global variables are a simple solution to sharing of data.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        Global variables make it harder to reason about the code (for humans and compilers):
+        the smaller the number of variables a given region of code reads and writes, the easier.
+        Global variables can be read and written from anywhere.
+        Therefore, global variables pose a challenge to the optimizer.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        We want to reduce the shared data in our software to the unavoidable minimum.
+        Therefore, global variables should be avoided where other means of communication are possible.
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Global_Variables')" name="Global_Variables__extra_button" id="Global_Variables__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Global_Variables__extra_body">
+          Note that a private static class variable sId is global. For example two threads having
+          each an instance of the class could access sId via these instances.
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+  <DIV class="">
+<H3><A name="Global_variables_initialization" id="Global_variables_initialization">Global variables initialization</A></H3>
+<SPAN class="link_button" id="link-Global_variables_initialization__button" name="link-Global_variables_initialization__button"><A href="?showone=Global_variables_initialization#Global_variables_initialization">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Global_variables_initialization')" name="Global_variables_initialization__button" id="Global_variables_initialization__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      In the rare and justified cases where you use global variables, including file-static variables, static member variables and variables in
+      namespace scope, initialize them statically.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Global_variables_initialization__body" id="Global_variables_initialization__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+		<ul>
+        <li>This rule additionally applies to file-static variables.</li>
+        <li>A global variable is statically initialized if the type has no constructor or a <code>constexpr</code> constructor.
+          This is the case for fundamental types (integers, chars, floats, or pointers) and POD (Plain Old Data: structs/unions/arrays 
+          of fundamental types or other POD structs/unions). </li>
+		</ul>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        Dynamic initialization of globals can be used to run code before <code>main()</code>.
+        Destructors of globals can be used to run code after <code>main()</code>.
+        Dynamic initialization of globals in dynamically loaded objects can be used to run code on plugin load.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        It is very hard to reason about the order of execution of such functions.
+        Especially if dynamically initialized globals are present in shared libraries that are linked
+        into dynamically loaded objects, few people understand the semantics.
+      </P>
+      <p>
+        As an example do this:
+      </p>  
+        <DIV class=""><PRE>struct Pod {
+  int indexes[5];
+  float width;
+};
+struct LiteralType {
+  int value;
+  constexpr LiteralType() : value(1) {}
+};
+
+Pod gData;   
+LiteralType gOtherData;</PRE></DIV>
+      <p>
+      	But not this :
+      </p>  
+      	<DIV class=""><PRE class="badcode">class NotPod {
+  NotPod();
+};
+NotPod gBadData;  // dynamic constructor</PRE></DIV>
+        
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        Global variables must be initialized statically. <br>
+        We only allow global variables to contain POD data.  This
+        rule completely disallows <code>std::vector</code> (use <code>std::array</code> instead), or
+        <code>std::string</code> (use <code>const char []</code>) for global variables.
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Global_variables_initialization')" name="Global_variables_initialization__extra_button" id="Global_variables_initialization__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Global_variables_initialization__extra_body">
+        <p>
+          If there is a need for startup or shutdown code, dynamic constructors may be used. But only if:
+          <ul>
+            <li>The dependencies on other data are minimized.</li>
+            <li>It is documented what code depends on this and why there is no issue of incorrect calling order.</li>
+            <li>Side-effects are clearly understood and documented.</li>
+          </ul>
+        </p>
+        <p>
+        Example that exhibits the problem of execution order:
+        </p>
+        <DIV class=""><PRE class="badcode">// Struct.h:
+#include &lt;string&gt;
+struct Struct {
+  static std::string sString;
+};
+
+// Struct.cxx:
+std::string Struct::sString = "Hello World";
+
+// main.cxx:
+#include "Struct.h"
+#include &lt;iostream&gt;
+
+std::string gAnotherString = Struct::sString;
+
+int main() {
+  std::cout &lt;&lt; gAnotherString &lt;&lt; std::endl;
+  return 0;
+}</PRE></DIV>
+        <p>
+        This program will either output "Hello World" or crash, depending on the initialization order (with GCC on Linux it depends on whether you link with <code>g++ Struct.o main.o</code> or <code>g++ main.o Struct.o</code>).
+        </p>
+      </div>
+</P>
+
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Static_Variables_in_functions" id="Static_Variables_in_functions">Static Variables in functions</A></H3>
+<SPAN class="link_button" id="link-Static_Variables_in_functions__button" name="link-Static_Variables_in_functions__button"><A href="?showone=Static_Variables_in_functions#Static_Variables_in_functions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Static_Variables_in_functions')" name="Static_Variables_in_functions__button" id="Static_Variables_in_functions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Static variables in functions (called "function-local static variables" in the C++ terminology) 
+      are expensive and need care on destruction.
+      Prefer to use static class variables where possible.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Static_Variables_in_functions__body" id="Static_Variables_in_functions__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        Function-local static variables are initialized on first use and destructed in the reverse order of construction.
+        <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;"></DIV>C++11</DIV>
+<DIV class="cpp11">
+          Since C++11, function-local static variables are guaranteed to be initialized exactly once, even in a multi-threaded environment.
+        </DIV>
+</DIV>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        The variable is lazily initialized.
+        Therefore the order of construction is better under control.
+        Also the cost of initialization is only incurred if it is really needed.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        Because of the thread-safe lazy initialization, function-local static variables have an extra cost compared to other function variables.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+      Use static class variables rather than function-local static variables.
+      Therefore, do this :
+      	<DIV class=""><PRE>class Something
+{
+  public:
+    int generateId() {
+      return Something::sId++;
+    }
+
+  private:
+    static int sId; // initialized in .cxx
+};
+</PRE></DIV>
+      	instead of :
+      	<DIV class=""><PRE class="badcode">class Something
+{
+  public:
+    int generateId() {
+      static int sId = 0;
+      return sId++;
+    }
+};
+</PRE></DIV>
+      	</P>
+      	
+<SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Static_Variables_in_functions')" name="Static_Variables_in_functions__extra_button" id="Static_Variables_in_functions__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Static_Variables_in_functions__extra_body">
+        <p>
+          Function-local static variables can be used to build factory functions for lazily initialized global objects.
+          This makes it possible to safely use dynamically initialized types in the global scope.
+        </p>
+        <p>
+          In case function-local static variables are nevertheless used, it is best to avoid non-owning references
+          because their destruction happens after return from <code>main()</code>, as shown on the following 
+          code snippets :
+      <DIV class=""><PRE>std::string &amp;globalMessage()
+{
+  static std::string message = "Hello world.";
+  return message;
+}
+
+int main()
+{
+  std::cout &lt;&lt; globalMessage() &lt;&lt; '\n';
+  globalMessage() = "Goodbye cruel world.";
+  std::cout &lt;&lt; globalMessage() &lt;&lt; '\n';
+  return 0;
+}
+// prints:
+// Hello world.
+// Goodbye cruel world.</PRE></DIV>
+      <DIV class=""><PRE class="badcode">class BreakTheCode
+{
+  public:
+    void setReference(int *value) { mValuePointer = value; }
+    ~BreakTheCode() { *mValuePointer += 2; }
+
+  private:
+    int *mValuePointer = 0;
+};
+
+BreakTheCode &amp;globalBreaker()
+{
+  static BreakTheCode breaker;
+  return breaker;
+}
+
+int main()
+{
+  int someValue = 1;
+  globalBreaker().setReference(&amp;someValue);
+  return 0;
+}
+// globalBreaker::breaker accesses main::someValue after it went out of scope.
+// This example should be harmless, but if a more complex type instead of int
+// is involved — and possibly the destructor of another function-local
+// static overwrites the stack data from main — this pattern can lead to a crash.</PRE></DIV>
+      </p>
+      </div>
+</P>
+      
+    </DIV></DIV>
+  </DIV>
+</DIV>
+
+<DIV class="">
+<H2 name="Classes" id="Classes">Classes</H2>
+  Classes are the fundamental unit of code in C++. Naturally, we use
+  them extensively. This section lists the main dos and don'ts you
+  should follow when writing a class.
+
+  <DIV class="">
+<H3><A name="Initialization" id="Initialization">Initialization</A></H3>
+<SPAN class="link_button" id="link-Initialization__button" name="link-Initialization__button"><A href="?showone=Initialization#Initialization">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Initialization')" name="Initialization__button" id="Initialization__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Declare and initialize members variables in the same order.
+      Prefer initialization (in the constructor initializer list or in-class) to assignment (in the constructor function body).
+      Do not perform unmanaged resource acquisition in the constructor.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Initialization__body" id="Initialization__body" style="display: none">
+      <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;">in-class member initialization</DIV>C++11</DIV>
+<DIV class="cpp11">
+        Since C++11, it is possible to initialize struct/class member variables in the class definition.
+        Thus, if there is no explicit initialization of this member variable in the constructor, this assignment will be used for initialization.
+        <DIV class=""><PRE>class MyClass {
+  public:
+    MyClass() = default;
+    MyClass(int z) : a(z) {}
+
+    int data() const {
+      return a;
+    }
+
+  private:
+    int a = 1234;  // in-class initialization
+};
+
+int main() {
+  MyClass firstClass;
+  MyClass secondClass{5678};
+
+  std::cout &lt;&lt; firstClass.data()
+    &lt;&lt; ' ' &lt;&lt; secondClass.data();
+  return 0;
+}</PRE></DIV>
+        The program above prints "1234 5678".
+      </DIV>
+</DIV>
+
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        <p>
+          Class member variables are initialized in the order in which they are declared in the class definition.
+          The order in the constructor initializer list has no influence on initialization order and therefore may be misleading if it does not match the order of the declaration.
+          Compilers often issue a warning if this rule is broken, but not always.
+        </p>
+        <p>
+          If a member variable is not explicitly initialized in the constructor initializer list the default constructor of that variable is called.
+          Therefore, if a member variable is assigned to in the constructor function body, the member variable may get initialized unnecessarily with the default constructor.
+        </p>
+        <p>
+         If you do not declare any constructors yourself then the compiler will generate a 
+         default constructor for you, which may leave some fields uninitialized or
+         initialized to inappropriate values.
+        </p>
+        <p>
+         Examples:
+        </p>
+        <p>
+         In-class member initialization:
+        </p>
+        <DIV class=""><PRE>// MyClass.h
+class MyClass {
+// ...
+  private:
+    int mValue = 1234;
+};</PRE></DIV>
+        <p>
+         Initialization list:
+        </p>
+        <DIV class=""><PRE>// MyClass.h
+class MyClass : public MyBase  {
+  // ...
+  private:
+    int mValue;
+    std::vector mVector;
+};
+// MyClass.cxx
+MyClass::MyClass()
+  : MyBase(),
+    mValue(0),
+    mVector()
+{}</PRE></DIV>
+        <p>
+         See an example of initialization via <code>std::initializer_list</code>
+         in <a href="#Brace_Initialization"> Brace Initialization</a>.
+        </p>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          Member variables should be declared and initialized in the same order.
+        </p>
+        <p>
+          Use in-class member initialization for simple initializations,
+          especially when a member variable must be initialized the same way
+          in more than one constructor.
+        </p>
+        <p>
+          If your class defines member variables that aren't
+          initialized in-class, and if it has no other constructors,
+          you must define a default constructor (one that takes no
+          arguments). It should preferably initialize the object in
+          such a way that its internal state is consistent and valid.
+        </p>
+        <p>
+          If your class inherits from an existing class but you add no
+          new member variables, you are not required to have a default
+          constructor.
+        </p>
+        <p>
+          Avoid unmanaged resource acquisition in constructors, since the destructor of the class will not be called if an exception is thrown from the constructor.
+          Therefore, always use C++ <a href="http://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Resource_Acquisition_Is_Initialization">
+          "resource acquisition is initialization" (RAII)</a>
+          idiom to ensure resources are properly freed.
+        </p>
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Initialization')" name="Initialization__extra_button" id="Initialization__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Initialization__extra_body">
+      <p>
+       An example demonstrating how to avoid unmanaged resource acquisition in constructor.
+       Instead of
+      </p>
+      <DIV class=""><PRE class="badcode">// MyClass.h
+class MyClass {
+  public:
+    MyClass();
+    ~MyClass();
+  private:
+    Something* mSomething;  // raw pointer
+};
+// MyClass.cxx
+MyClass::MyClass()
+  : mSomething(new Something()) 
+{}     
+MyClass::~MyClass()
+{
+  delete mSomething;       // mSomething has to be deleted with its owner
+}     </PRE></DIV>
+      <p>
+      do
+      </p>
+      <DIV class=""><PRE>// MyClass.h
+class MyClass {
+  public:
+    MyClass();
+    ~MyClass() = delete;   // mSomething is deleted automatically
+  private:
+    std::unique_ptr&lt;Something&gt; mSomething; // smart pointer
+};
+// MyClass.cxx
+MyClass::MyClass()
+  : mSomething(new Something())
+{}     </PRE></DIV>
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Virtual_functions_in_constructors_and_destructors" id="Virtual_functions_in_constructors_and_destructors">Virtual functions in constructors and destructors</A></H3>
+<SPAN class="link_button" id="link-Virtual_functions_in_constructors_and_destructors__button" name="link-Virtual_functions_in_constructors_and_destructors__button"><A href="?showone=Virtual_functions_in_constructors_and_destructors#Virtual_functions_in_constructors_and_destructors">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Virtual_functions_in_constructors_and_destructors')" name="Virtual_functions_in_constructors_and_destructors__button" id="Virtual_functions_in_constructors_and_destructors__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Do not call virtual functions in constructors and destructors. <br>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Virtual_functions_in_constructors_and_destructors__body" id="Virtual_functions_in_constructors_and_destructors__body" style="display: none">
+    
+      <p>
+      Inside constructors and destructors virtual function do not
+      behave "virtually". If the work calls virtual functions, these calls 
+      will not get dispatched to the subclass implementations.
+      Calls to an unimplemented pure virtual function result in undefined 
+      behavior.
+      </p>
+      <p>
+      Calling a virtual function non-virtually is fine:
+        <DIV class=""><PRE class="badcode">class MyClass {
+  public:
+    MyClass() { doSomething(); }    // Bad
+    virtual void doSomething();
+};</PRE></DIV>
+        <DIV class=""><PRE>class MyClass {
+  public:
+    MyClass() { MyClass::doSomething(); }    // Good
+    virtual void doSomething();
+};</PRE></DIV>
+      </p>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        Constructors should never call virtual functions.
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Explicit_Constructors" id="Explicit_Constructors">Explicit Constructors</A></H3>
+<SPAN class="link_button" id="link-Explicit_Constructors__button" name="link-Explicit_Constructors__button"><A href="?showone=Explicit_Constructors#Explicit_Constructors">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Explicit_Constructors')" name="Explicit_Constructors__button" id="Explicit_Constructors__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use the C++ keyword <code>explicit</code> for constructors with
+      one argument.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Explicit_Constructors__body" id="Explicit_Constructors__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        Normally, if a constructor takes one argument, it can be used
+        as a conversion.  For instance, if you define
+        <DIV class=""><PRE class="badcode">class Foo {
+  public:
+    Foo(const std::string &amp;name);
+};</PRE></DIV>
+        and then pass a string to a
+        function that expects a <code>Foo</code>, the constructor will
+        be called to convert the string into a <code>Foo</code> and
+        will pass the <code>Foo</code> to your function for you.
+        Declaring a constructor <code>explicit</code> prevents
+        an implicit conversion.
+        <DIV class=""><PRE>class MyClass {
+  public:
+    explicit MyClass(int number); //allocate number bytes 
+    explicit MyClass(const std::string &amp;name); // initialize with string name
+  };</PRE></DIV>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          We require all single argument constructors to be
+          explicit. 
+        </p>
+        <p>
+          Exceptions are copy constructors and classes that are intended to be
+          transparent wrappers around other classes.
+        </p>
+        <p>
+          Finally, constructors that take only an <code>initializer_list</code> may be
+          non-explicit. This is to permit construction of your type using the
+          assignment form for brace init lists (i.e. <code>MyType myObject = {1, 2}
+          </code>).
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Copy__and_Move_" id="Copy__and_Move_">Copy (and Move)</A></H3>
+<SPAN class="link_button" id="link-Copy__and_Move___button" name="link-Copy__and_Move___button"><A href="?showone=Copy__and_Move_#Copy__and_Move_">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Copy__and_Move_')" name="Copy__and_Move___button" id="Copy__and_Move___button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Explicitly enable or disable the copy constructor/assignment operator.
+      Only implement move constructors/assignment operators if your class needs optimizations for move semantics.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Copy__and_Move___body" id="Copy__and_Move___body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        The copy constructor and copy assignment operator are used to create copies of objects.
+        The move constructor and move assignment operator are used to move (semantically) objects.
+        <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;">move semantics</DIV>C++11</DIV>
+<DIV class="cpp11">
+          Move semantics were introduced with C++11.
+          In essence, a move is just a copy that can be optimized from the knowledge that the source object is at the end of its life (such objects bind to rvalue references).
+          Thus, a move of a <code>std::vector</code> does not need to copy all data, but only the pointer to the data.
+          Additionally, the source object must be told that it does not own the data anymore, to inhibit the <code>free</code> from the destructor.
+          In most cases the move constructor/assignment operator therefore modifies the source object (e.g. setting the data pointer to <code>nullptr</code>).
+        </DIV>
+</DIV>
+        The copy and move constructors are implicitly invoked by the compiler or generic containers in some situations, e.g. passing objects by value or from <code>std::vector</code>.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          Classes that use value semantics normally need to be copyable.
+          If they are not copyable (e.g. unique resource ownership) they should be movable.
+          If the copy constructor is trivial (which normally implies an empty destructor) it can be useful for performance reasons to use the key word <code>default</code>:
+          <DIV class=""><PRE>ClassName(const ClassName &amp;other) = default;</PRE></DIV>
+	  instead of
+	  <DIV class=""><PRE class="badcode">ClassName(const ClassName &amp;other)
+  : data(other.data) {}</PRE></DIV>
+          The former can be optimized much better by the compiler.
+        </p>
+        <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;">default and delete</DIV>C++11</DIV>
+<DIV class="cpp11">
+          Since C++11 it is possible to <code>delete</code>/<code>default</code> copy/move constructors and copy/move assignment operators.
+        </DIV>
+</DIV>
+        <p>
+          Polymorphic class design implies pointer semantics.
+          These classes should have their copy constructors disabled via <code>delete</code>:
+          <DIV class=""><PRE>ClassName(const ClassName &amp;) = delete;
+ClassName &amp;operator=(const ClassName &amp;) = delete;</PRE></DIV>
+        </p>
+        <p>
+          If your polymorphic class needs to be copyable, use a virtual <code>clone()</code> method.
+          This way copying can be implemented without slicing and be used more naturally for pointers:
+          <DIV class=""><PRE>void someFunction(SomeInterface *object)
+{
+  SomeInterface *objectCopy = object-&gt;clone();
+  ...
+}</PRE></DIV>
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<SPAN class="cpp11_marker">since C++11</SPAN><H3><A name="Delegating_and_inheriting_constructors" id="Delegating_and_inheriting_constructors">Delegating and inheriting constructors</A></H3>
+<SPAN class="link_button" id="link-Delegating_and_inheriting_constructors__button" name="link-Delegating_and_inheriting_constructors__button"><A href="?showone=Delegating_and_inheriting_constructors#Delegating_and_inheriting_constructors">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Delegating_and_inheriting_constructors')" name="Delegating_and_inheriting_constructors__button" id="Delegating_and_inheriting_constructors__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use delegating and inheriting constructors
+      when they reduce code duplication. 
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Delegating_and_inheriting_constructors__body" id="Delegating_and_inheriting_constructors__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        <p>
+          Delegating and inheriting constructors are two different features,
+          both introduced in C++11, for reducing code duplication in
+          constructors. Delegating constructors allow the constructor
+          to forward work to another constructor of the same class,
+          using a special variant of the initialization list
+          syntax. For example:
+        </p>
+        <DIV class=""><PRE>Foo::Foo(const string&amp; name) : mName(name) {
+  ...
+}
+
+Foo::Foo() : Foo("example") { }</PRE></DIV>
+        <p>
+          A subclass, per default, inherits all functions of the base class.
+          This is not the case for constructors.
+          Since C++11 it is possible to explicitly inherit the constructors of a base class.
+          This can be a significant simplification for subclasses that don't need custom constructor logic.
+        </p>
+        <DIV class=""><PRE>class Base {
+  public:
+    Base();
+    explicit Base(int number);
+    explicit Base(const string&amp; name);
+    ...
+};
+
+class Derived : public Base {
+  public:
+    using Base::Base;  // Base's constructors are redeclared here.
+};</PRE></DIV>
+        <p>
+          This is especially useful when <code>Derived</code>'s constructors
+          don't have to do anything more than calling <code>Base</code>'s
+          constructors.
+        </p>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          Use delegating and inheriting constructors when they reduce code duplication.<br>
+          Be cautious about inheriting constructors when your derived class has new member
+          variables and use in-class member initialization for the derived class's member variables.
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Structs_vs._Classes" id="Structs_vs._Classes">Structs vs. Classes</A></H3>
+<SPAN class="link_button" id="link-Structs_vs._Classes__button" name="link-Structs_vs._Classes__button"><A href="?showone=Structs_vs._Classes#Structs_vs._Classes">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Structs_vs._Classes')" name="Structs_vs._Classes__button" id="Structs_vs._Classes__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use a <code>struct</code> only for passive objects that carry data;
+      everything else is a <code>class</code>.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Structs_vs._Classes__body" id="Structs_vs._Classes__body" style="display: none">
+      <p>
+        The <code>struct</code> and <code>class</code> keywords behave
+        almost identically in C++.  We add our own semantic meanings
+        to each keyword, so you should use the appropriate keyword for
+        the data-type you're defining.
+      </p>
+      <p>
+        <code>structs</code> should be used for passive objects that carry
+        data, and may have associated constants, but lack any functionality
+        other than access/setting the data members. The
+        accessing/setting of fields is done by directly accessing the
+        fields rather than through method invocations. Methods should
+        not provide behavior but should only be used to set up the
+        data members, e.g., constructor, destructor,
+        <code>initialize()</code>, <code>reset()</code>,
+        <code>validate()</code>.
+      </p>
+      <p>
+        If more functionality is required, a <code>class</code> is more
+        appropriate. 
+      </p>
+      <p>
+        You can use <code>struct</code>
+        instead of <code>class</code> for functors and traits.
+      </p>
+      <p>
+        Note that member variables in structs and classes have
+        <a HREF="#Variable_Names">different naming rules</a>.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Destructors" id="Destructors">Destructors</A></H3>
+<SPAN class="link_button" id="link-Destructors__button" name="link-Destructors__button"><A href="?showone=Destructors#Destructors">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Destructors')" name="Destructors__button" id="Destructors__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+	Every class must free resources (objects, IO handlers, etc.) it allocated 
+        during its lifetime.  The base class destructors must be declared virtual 
+        if they are public.
+    </DIV>
+    
+    <DIV class=""><DIV class="stylepoint_body" name="Destructors__body" id="Destructors__body" style="display: none">
+        <p>
+        In polymorphic design a special care is needed in implementing
+        base class destructors. If deletion through a pointer to a base
+        <code>Base</code> should be allowed, then the <code>Base</code> 
+        destructor must be public and virtual. Otherwise, it should be 
+        protected and can be non-virtual.
+        </p>
+        
+        <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+        Always write a destructor for a base class, because the implicitly generated
+        one is public and nonvirtual.
+        </p>
+        </P>
+        <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Destructors')" name="Destructors__extra_button" id="Destructors__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Destructors__extra_body">
+          In some class designs the destructors (of all classes in the inheritance tree) do nothing (implying that the classes and their members never allocate any resources).
+          Typically, such designs do not have any virtual functions at all, and the virtual destructor would be the only reason for the existence of a vtable.
+          Then a virtual destructor may be unnecessary and may be omitted.
+        </div>
+</P>
+     </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Inheritance" id="Inheritance">Inheritance</A></H3>
+<SPAN class="link_button" id="link-Inheritance__button" name="link-Inheritance__button"><A href="?showone=Inheritance#Inheritance">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Inheritance')" name="Inheritance__button" id="Inheritance__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      When using inheritance, make it <code>public</code> and declare overriden methods 
+	as <code>override</code> or <code>final</code>.
+	However, composition is often more appropriate than inheritance especially if a 
+	class is not designed to be a base class. 
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Inheritance__body" id="Inheritance__body" style="display: none">
+      <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;">override and final</DIV>C++11</DIV>
+<DIV class="cpp11">
+        <p>
+          Since C++11 it is possible to mark virtual functions as overriding a virtual function from the base class.
+          This is useful to state the intent and get a compile error if this intent is not fulfilled for some reason (e.g. typo in the function name, mismatching function signature, virtual keyword forgotten in the base class).
+        </p>
+<p>
+          The <code>final</code> keyword tells the compiler that subclasses may not override the virtual function anymore.
+          This is a special case, but useful to limit abuse of your classes by users.
+        </p>
+      </DIV>
+</DIV>
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        When a sub-class inherits from a base class, it includes the
+        definitions of all the data and operations that the parent
+        base class defines.  In practice, inheritance is used in two
+        major ways in C++: implementation inheritance, in which
+        actual code is inherited by the child, and interface inheritance, in which only
+        method names are inherited.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        Implementation inheritance reduces code size by re-using the
+        base class code as it specializes an existing type.  Because
+        inheritance is a compile-time declaration, you and the
+        compiler can understand the operation and detect errors.
+        Interface inheritance can be used to programmatically enforce
+        that a class expose a particular API.  Again, the compiler
+        can detect errors, in this case, when a class does not define
+        a necessary method of the API.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        For implementation inheritance, because the code implementing
+        a sub-class is spread between the base and the sub-class, it
+        can be more difficult to understand an implementation.  The
+        sub-class cannot override functions that are not virtual, so
+        the sub-class cannot change implementation.  The base class
+        may also define some data members, so that specifies physical
+        layout of the base class.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          All inheritance should be <code>public</code>.  If you want to
+          do private inheritance, you should be including an instance of
+          the base class as a member instead.
+        </p>
+        <p>
+          Do not overuse implementation inheritance.  Composition is
+          often more appropriate. Try to restrict use of inheritance
+          to the "is-a" case: <code>Bar</code> subclasses
+          <code>Foo</code> if it can reasonably be said that
+          <code>Bar</code> "is a kind of" <code>Foo</code>.
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Multiple_Inheritance" id="Multiple_Inheritance">Multiple Inheritance</A></H3>
+<SPAN class="link_button" id="link-Multiple_Inheritance__button" name="link-Multiple_Inheritance__button"><A href="?showone=Multiple_Inheritance#Multiple_Inheritance">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Multiple_Inheritance')" name="Multiple_Inheritance__button" id="Multiple_Inheritance__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+	Use multiple inheritance implementation only when at most one of
+      the base classes has an implementation; all other base classes
+      must be <A HREF="#Interfaces">pure interface</A> classes.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Multiple_Inheritance__body" id="Multiple_Inheritance__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        Multiple inheritance allows a sub-class to have more than one
+        base class.  However this functionality can bring to the so-called <a href="http://en.wikipedia.org/wiki/Multiple_inheritance#The_diamond_problem">Diamond problem</a> unless base classes are pure interfaces.
+      </P>
+      
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        Multiple inheritance is allowed only when all superclasses, with the
+        possible exception of the first one, are <A HREF="#Interfaces">pure
+        interfaces</A>.  
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Interfaces" id="Interfaces">Interfaces</A></H3>
+<SPAN class="link_button" id="link-Interfaces__button" name="link-Interfaces__button"><A href="?showone=Interfaces#Interfaces">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Interfaces')" name="Interfaces__button" id="Interfaces__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      If a class was designed as a pure interface, keep it as a pure interface.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Interfaces__body" id="Interfaces__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        <p>
+        A class is a pure interface if it meets the following requirements:
+        </p>
+        <ul>
+          <li> It has only public pure virtual ("<code>= 0</code>") methods
+               and static methods (see <A HREF="#Destructors">Destructors</A>).
+               </li>
+          <li> It does not have data members.
+               </li>
+          <li> It does not have any constructors defined.  If a constructor is
+               provided, it must take no arguments and it must be protected.
+               </li>
+          <li> If it is a subclass, it may only be derived from classes
+               that satisfy these conditions.
+               </li>
+        </ul>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        When writing a pure interface, apply the <a href="#Interface_Names">corresponding naming rule</a> and 
+	 make sure there is no implementation in it. 
+	 Make sure not to add implementation to an existing pure interface.
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Operator_Overloading" id="Operator_Overloading">Operator Overloading</A></H3>
+<SPAN class="link_button" id="link-Operator_Overloading__button" name="link-Operator_Overloading__button"><A href="?showone=Operator_Overloading#Operator_Overloading">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Operator_Overloading')" name="Operator_Overloading__button" id="Operator_Overloading__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      When overloading operators keep the same semantics. 
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Operator_Overloading__body" id="Operator_Overloading__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+	Operator overloading is a specific case of function overloading in which some or all operators like +, = or == 
+	have different behaviors depending on the types of their arguments.
+	It can easily be emulated using function calls.
+	<p>For example: 
+	  <code>
+           a &lt;&lt; 1;
+	  </code> 
+	  shifts the bits of the variable left by one bit if a is an integer, but if a is an output stream instead this will write "1" to it. 
+       </p>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+	<p>
+	  The semantics of the operator overloading should be kept the same. 
+          Because operator overloading allows the programmer to change 
+	    the usual semantics of an operator, it should be used with care.
+	</p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+  
+  <DIV class="">
+<H3><A name="Access_Control" id="Access_Control">Access Control</A></H3>
+<SPAN class="link_button" id="link-Access_Control__button" name="link-Access_Control__button"><A href="?showone=Access_Control#Access_Control">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Access_Control')" name="Access_Control__button" id="Access_Control__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Hide internals. Avoid returning handles to internal data managed 
+      by your class.
+    </DIV>
+      
+    <DIV class=""><DIV class="stylepoint_body" name="Access_Control__body" id="Access_Control__body" style="display: none">
+      <p>
+      Information hiding protects the code from uncontrollable modifying 
+      state of your object by clients and it also help to minimize dependencies
+      between calling and called codes.
+      </p>
+      <p>
+      A class consisting mostly of gets/sets is probably poorly designed.
+      Consider providing an abstraction or changing it in <code>struct</code>.
+      </p>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+      Make data members <code>private</code>, except in <code>structs</code>. 
+      If there is no better way how to hide the class internals, 
+      provide the access through protected or public accessor and, 
+      if really needed, modifier functions.
+      </P>
+      
+      <p>
+      See also <a HREF="#Inheritance">Inheritance</a>,  
+      <a HREF="#Structs_vs._Classes">Structs vs. Classes</a> and 
+      <a HREF="#Function_Names">Function Names</a>.
+      </p>
+    </DIV></DIV>
+  </DIV>
+</DIV>
+
+<DIV class="">
+<H2 name="Others" id="Others">Others</H2>
+
+  <DIV class="">
+<H3><A name="Exceptions" id="Exceptions">Exceptions</A></H3>
+<SPAN class="link_button" id="link-Exceptions__button" name="link-Exceptions__button"><A href="?showone=Exceptions#Exceptions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Exceptions')" name="Exceptions__button" id="Exceptions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use C++ exceptions instead of return codes for error handling. Do not use exceptions to return values. 
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Exceptions__body" id="Exceptions__body" style="display: none">
+      <p>
+        Exceptions should be used for error handling. <br>
+        Exception classes typically derive from <code>std::exception</code> (or one of its subclasses like <code>std::runtime_error</code>).<br> 
+        Exceptions should be scoped inside the class that throws them.<br> 
+        By default, catch exceptions by reference.<br> 
+        <DIV class=""><PRE>int computePedestals()
+{
+  ...
+  if (somethingWrong) {
+    throw BadComputation();
+  }
+  ...
+}
+...
+try {
+  computePedestals();
+}
+catch (BadComputation&amp; e) {  // catch exception by reference
+  // code that handles error
+   ...
+}</PRE></DIV>
+        <DIV class=""><PRE class="badcode">int computePedestals()
+{
+  ...
+  if (somethingWrong) {
+    return -1;  
+  }
+  ...         
+}
+...
+if (computePedestals() == -1) {
+  // code that handles error
+  ...
+}</PRE></DIV>
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Use_of_const" id="Use_of_const">Use of const</A></H3>
+<SPAN class="link_button" id="link-Use_of_const__button" name="link-Use_of_const__button"><A href="?showone=Use_of_const#Use_of_const">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Use_of_const')" name="Use_of_const__button" id="Use_of_const__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Declare objects that are logically constant as <code>const</code>.
+      Design const-correct interfaces.
+      Consider <a href="#Use_of_constexpr"><code>constexpr</code></a> for some uses of const.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Use_of_const__body" id="Use_of_const__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;"></DIV>C++11</DIV>
+<DIV class="cpp11">
+          <p>
+            The Standard Library […] in simple words says that it expects operations on const objects to be thread-safe.
+            This means that the Standard Library won't introduce a data race as long as operations on const objects of your own types either
+            <ul>
+              <li>Consist entirely of reads –that is, there are no writes–; or</li>
+              <li>Internally synchronizes writes.</li>
+            </ul>
+            [Source: <a href="http://stackoverflow.com/questions/14127379/does-const-mean-thread-safe-in-c11">Stack Overflow</a>]
+          </p>
+
+          <p>
+            This is a great example of how C++11 is a simpler language: we can stop the Cold War-era waffling about subtleties about what 20th-century C++ const means, and proudly declare modern C++ const has the simple and natural and “obvious” meaning that most people expected all along anyway.
+          </p>
+          <p>
+            […] Bjarne Stroustrup writes: “I do point out that const means immutable and absence of race conditions in the last Tour chapter. […]”
+          </p>
+          [Source: <a href="http://isocpp.org/blog/2012/12/you-dont-know-const-and-mutable-herb-sutter">isocpp.org</a>]
+        </DIV>
+</DIV>
+        Variables and parameters can be declared as <code>const</code> to indicate that the variables are logically immutable.
+        (Because of <code>const_cast</code> and <code>mutable</code> member variables, and global variables, <code>const</code> is no hard guarantee for immutability.)
+        Member functions can be declared <code>const</code> to allow calls with <code>const</code> <code>this</code> pointer.
+        Note that overloading member functions on <code>const</code> is possible.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          <code>const</code> variables, data members, methods and
+          arguments add a level of compile-time type checking; it
+          is better to detect errors as soon as possible.
+          Therefore we strongly recommend that you use
+          <code>const</code> whenever it makes sense to do so.
+        </p>
+        <p> Use <code>const</code>:
+          <ul>
+            <li>
+              for an argument, if the function does not modify it when passed by reference or by pointer.
+            </li>
+            <li>For accessors.</li>
+            <li>
+              For methods, if they:
+              <ul>
+                <li>do not modify any non-local data;</li>
+                <li>can be safely (no data race) called from multiple threads;</li>
+                <li>do not call any non-<code>const</code> methods;</li>
+                <li>do not return a non-<code>const</code> pointer or non-<code>const</code> reference to a data member.</li>
+              </ul>
+            </li>
+            <li>
+              For data members, whenever they do not need to be modified after construction.
+            </li>
+          </ul>
+        </p>
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Use_of_const')" name="Use_of_const__extra_button" id="Use_of_const__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Use_of_const__extra_body">
+        <p>
+          <code>mutable</code> can be used to make objects that are already threadsafe (such as <code>std::mutex</code>) mutable in <code>const</code> methods.
+          Thus, it is possible to make <code>const</code> methods thread-safe, through internal synchronization.
+        </p>
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<SPAN class="cpp11_marker">since C++11</SPAN><H3><A name="Use_of_constexpr" id="Use_of_constexpr">Use of constexpr</A></H3>
+<SPAN class="link_button" id="link-Use_of_constexpr__button" name="link-Use_of_constexpr__button"><A href="?showone=Use_of_constexpr#Use_of_constexpr">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Use_of_constexpr')" name="Use_of_constexpr__button" id="Use_of_constexpr__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      In C++11, use <code>constexpr</code>
+      to define true constants or to ensure constant initialization.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Use_of_constexpr__body" id="Use_of_constexpr__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        Some variables can be declared <code>constexpr</code>
+        to indicate the variables are true constants,
+        i.e. fixed at compilation/link time.
+        Some functions and constructors can be declared <code>constexpr</code>
+        which enables them to be used
+        in defining a <code>constexpr</code> variable.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        Use of <code>constexpr</code> enables
+        definition of constants with floating-point expressions
+        rather than just literals;
+        definition of constants of user-defined types; and
+        definition of constants with function calls.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        Prematurely marking something as constexpr
+        may cause migration problems if later on it has to be downgraded.
+
+        Current restrictions on what is allowed
+        in constexpr functions and constructors
+        may invite obscure workarounds in these definitions.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          <code>constexpr</code> definitions enable a more robust
+          specification of the constant parts of an interface.
+          Use <code>constexpr</code> to specify true constants
+          and the functions that support their definitions.
+          Avoid complexifying function definitions to enable
+          their use with <code>constexpr</code>.
+          Do not use <code>constexpr</code> to force inlining.
+        </p>
+
+
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Use_of_constexpr')" name="Use_of_constexpr__extra_button" id="Use_of_constexpr__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Use_of_constexpr__extra_body">
+        While <code>constexpr</code> variables are constant expressions, they can still have an address.
+        Thus, using a <code>constexpr</code> variable as argument for a const-ref function parameter requires the <code>constexpr</code> variable to have a symbol.
+        Consider the following header file:
+        <DIV class=""><PRE>constexpr int GlobalScopeValue = 0;
+
+namespace Namespace {
+  constexpr int ScopeValue = 1;
+}
+
+struct Struct {
+  static constexpr int ScopeValue = 1;
+};
+
+template&lt;typename T&gt; struct TemplateStruct {
+  static constexpr int ScopeValue = 1;
+};
+
+void function(const int &amp;value);</PRE></DIV>
+        And the following test code:
+        <DIV class=""><PRE>function(GlobalScopeValue);      // fine
+function(Namespace::ScopeValue); // fine
+function(Struct::ScopeValue);    // link error
+function(TemplateStruct&lt;int&gt;::ScopeValue); // link error</PRE></DIV>
+
+        To provide the missing symbols you have to add
+        <DIV class=""><PRE>template&lt;typename T&gt; constexpr int TemplateStruct&lt;T&gt;::ScopeValue;</PRE></DIV>
+        to the header file and
+        <DIV class=""><PRE>constexpr int Struct::ScopeValue;</PRE></DIV>
+        to one <code>.cxx</code> file.
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Smart_Pointers" id="Smart_Pointers">Smart Pointers</A></H3>
+<SPAN class="link_button" id="link-Smart_Pointers__button" name="link-Smart_Pointers__button"><A href="?showone=Smart_Pointers#Smart_Pointers">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Smart_Pointers')" name="Smart_Pointers__button" id="Smart_Pointers__button">▶</SPAN>
+
+    <DIV style="display:inline;" class="">
+      <a href="http://en.cppreference.com/w/cpp/memory/unique_ptr"><code>std::unique_ptr</code></a> and <a href="http://en.cppreference.com/w/cpp/memory/shared_ptr"><code>std::shared_ptr</code></a> should be used consistently instead of non-owning raw pointers.
+      Never use owning raw pointers, and thus never use <code>delete</code>.
+      The use of raw pointers may need an explanation in form of a comment.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Smart_Pointers__body" id="Smart_Pointers__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        <DIV class="cpp11box">
+<DIV class="cpp11Header">
+<DIV style="float:left;">smart pointers</DIV>C++11</DIV>
+<DIV class="cpp11">
+          Smart pointers have existed long before C++11.
+          But since C++11 the standard library contains the classes <code>unique_ptr&lt;T&gt;</code>,
+          <code>shared_ptr&lt;T&gt;</code>, and <code>weak_ptr&lt;T&gt;</code>.
+          Also, the standard library provides <code>make_shared&lt;T&gt;</code> and starting with C++14 also <code>make_unique&lt;T&gt;</code>.
+        </DIV>
+</DIV>
+        Smart pointers are objects that act like pointers, but automate ownership.
+        There are two main semantics for ownership: unique and shared ownership.
+        <p>
+          Unique ownership ensures that there can be only one smart pointer to the object.
+          If that smart pointer goes out of scope it will free the pointee.
+        </p>
+        <p>
+          Shared ownership allows to have multiple pointers to an object without deciding who is the exclusive owner.
+          Thus the owners can be freed in any order and the pointer will stay valid until the last one is freed, in which case the pointee is also freed.
+          Note that <code>shared_ptr&lt;T&gt;</code> is thread-safe and thus enables sharing ownership over multiple threads.
+        </p>
+        <p>
+        Example:
+        <DIV class=""><PRE>{
+  std::shared_ptr&lt;int&gt; first;
+  {
+    std::unique_ptr&lt;int&gt; second(new int);
+    auto third = std::make_shared&lt;int&gt;();
+    first = third;
+  }
+  // only second is freed automatically here
+}
+// first and third are automatically freed here</PRE></DIV>
+         When exiting the inner scope, only <code>second</code> is freed automatically, because the last
+         reference to it went out of scope. But even though  <code>third </code> went out of scope here, 
+         no free occurred because <code>first</code> still has a reference.  Only when <code>first</code> 
+         went out of scope and as it is the last reference, <code>third </code> is automatically freed.
+        </p>
+        <p>
+          A <a href="http://en.cppreference.com/w/cpp/memory/weak_ptr">weak pointer (<code>weak_ptr&lt;T&gt;</code>)</a> can be used to break cyclic ownership.
+        </p>
+
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        Smart pointers are extremely useful for preventing memory leaks, and
+        are essential for writing exception-safe code. They also formalize
+        and document the ownership of dynamically allocated memory.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        Smart pointers enable sharing or transfer of ownership and can thus act as a tempting alternative to careful design of ownership semantics.
+        This could lead to confusing code and even bugs in which memory is never deleted.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <dl>
+          <dt><code>std::unique_ptr</code></dt>
+          <dd>Straightforward and risk-free. This should be your default for any pointer.</dd>
+          <dt><code>std::shared_ptr</code></dt>
+          <dd>
+            If you really need to share ownership, use a <code>shared_ptr</code>.
+            You should avoid designs that require shared ownership, though, as it incurs an overhead.
+            <code>unique_ptr</code> on the other hand is without overhead.
+          </dd>
+        </dl>
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Smart_Pointers')" name="Smart_Pointers__extra_button" id="Smart_Pointers__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Smart_Pointers__extra_body">
+            <p>
+              The following code appears to require shared ownership:
+              <DIV class=""><PRE class="badcode">void function(shared_ptr&lt;int&gt; value)
+{
+  *value = 0;
+}
+
+void otherFunction()
+{
+  auto ptr = make_shared&lt;int&gt;();
+  function(ptr);
+  ...
+}</PRE></DIV>
+              Instead the code really has unique ownership in <code>otherFunction()</code>.
+              There is no reason that <code>function()</code> and <code>otherFunction()</code> need 
+              to share ownership:
+              <DIV class=""><PRE>void function(int *value) // caller retains ownership
+{
+  *value = 0;
+}
+
+void otherFunction()
+{
+  unique_ptr&lt;int&gt; ptr{new int};
+  function(ptr.get());
+  ...
+}</PRE></DIV>
+              There would be a reason to share ownership if the owner of the object is a different thread.
+            </p>
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Magic_numbers" id="Magic_numbers">Magic numbers</A></H3>
+<SPAN class="link_button" id="link-Magic_numbers__button" name="link-Magic_numbers__button"><A href="?showone=Magic_numbers#Magic_numbers">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Magic_numbers')" name="Magic_numbers__button" id="Magic_numbers__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      <p>
+      Avoid magic numbers.
+      </p>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Magic_numbers__body" id="Magic_numbers__body" style="display: none">
+      <p>Avoid spelling literal constants like <code>42</code> or 
+      <code>3.141592</code> in code.
+      Use symbolic names and expressions instead. Names add information and introduce
+      a single point of maintenance. 
+      </p>
+      <p>
+      Example of constants at namespace level:
+      </p>
+      <DIV class=""><PRE>static constexpr double Millimeter  = 1.;
+static constexpr double Centimeter  = 10.*Millimeter;</PRE></DIV>
+      <p>
+      Example of class-specific constants:
+      </p>
+      <DIV class=""><PRE>// File Widget.h
+class Widget {
+  private:
+    static const int sDefaultWidth;           // value provided in definition
+    static constexpr int DefaultHeight = 600; // value provided in declaration
+};          </PRE></DIV>
+      <DIV class=""><PRE>// File Widget.cxx
+const int Widget::sDefaultWidth = 800; // value provided in definition
+constexpr int Widget::DefaultHeight;   // definition required only if reference/pointer to 
+                                       // DefaultHeight is needed</PRE></DIV>
+    </DIV></DIV>      
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Preprocessor_Macros" id="Preprocessor_Macros">Preprocessor Macros</A></H3>
+<SPAN class="link_button" id="link-Preprocessor_Macros__button" name="link-Preprocessor_Macros__button"><A href="?showone=Preprocessor_Macros#Preprocessor_Macros">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Preprocessor_Macros')" name="Preprocessor_Macros__button" id="Preprocessor_Macros__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Avoid macros. Use inline functions, constexpr functions, enums, 
+      constexpr variables, or templates instead if they can solve the 
+      problem.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Preprocessor_Macros__body" id="Preprocessor_Macros__body" style="display: none">
+      <p>
+        Macros mean that the code you see is not the same as the code
+        the compiler sees.  This can introduce unexpected behavior,
+        especially since macros have global scope.
+      </p>
+      <p>
+        The following usage pattern will avoid many problems with
+        macros; if you use macros, follow it whenever possible:
+      </p>
+      <ul>
+        <li> Don't define macros in a <code>.h</code> file.
+             </li>
+        <li> Define macros (via <code>#define</code>) right before you use them,
+             and undefine them  (via <code>#undef</code>) right after.
+             </li>
+        <li> Do not just undefine an existing macro (via <code>#undef</code>) before
+             replacing it with your own; instead, pick a name that's
+             likely to be unique.
+             </li>
+        <li> Try not to use macros that expand to unbalanced C++
+             constructs, or at least document that behavior well.
+             </li>
+        <li> Prefer not using <code>##</code> to generate function/class/variable
+             names.
+             </li>
+	<li> Follow the naming convention as described <a href="#Macro_Names">here</a>.
+	     </li> 
+      </ul>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Write_Short_Functions" id="Write_Short_Functions">Write Short Functions</A></H3>
+<SPAN class="link_button" id="link-Write_Short_Functions__button" name="link-Write_Short_Functions__button"><A href="?showone=Write_Short_Functions#Write_Short_Functions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Write_Short_Functions')" name="Write_Short_Functions__button" id="Write_Short_Functions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Prefer small and focused functions.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Write_Short_Functions__body" id="Write_Short_Functions__body" style="display: none">
+      <p>
+        Long functions are hard to debug and makes readability difficult. Short functions allow code reuse.
+        If a function exceeds about 40 lines, think about whether it can be broken
+        up without harming the structure of the program.<br>
+        Giving the function a name that describes what it does might help splitting it into smaller pieces.
+        Functions should represent logical grouping, therefore it should be easy to assign them meaningful names.<br>
+
+        Please note that nesting is not the same as splitting long functions into short ones. 
+        In addition, it does not improve readability and ease of debug.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+ 
+
+
+  <DIV class="">
+<H3><A name="Run-Time_Type_Information__RTTI_" id="Run-Time_Type_Information__RTTI_">Run-Time Type Information (RTTI)</A></H3>
+<SPAN class="link_button" id="link-Run-Time_Type_Information__RTTI___button" name="link-Run-Time_Type_Information__RTTI___button"><A href="?showone=Run-Time_Type_Information__RTTI_#Run-Time_Type_Information__RTTI_">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Run-Time_Type_Information__RTTI_')" name="Run-Time_Type_Information__RTTI___button" id="Run-Time_Type_Information__RTTI___button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Avoid using Run Time Type Information (RTTI).
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Run-Time_Type_Information__RTTI___body" id="Run-Time_Type_Information__RTTI___body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        RTTI allows a programmer to query the C++ class of an
+        object at run time.  This is done by use of <code>typeid</code> or
+        <code>dynamic_cast</code>.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        <p>
+         Querying the type of an object at run-time frequently means a
+         design problem.  Needing to know the type of an
+         object at runtime is often an indication that
+         the design of your class hierarchy is flawed.
+        </p>
+        <p>
+         Undisciplined use of RTTI makes code hard to maintain.  It can
+         lead to type-based decision trees or switch statements scattered
+         throughout the code, all of which must be examined when making
+         further changes.
+        </p>
+        <p>
+          Decision trees based on type are a strong indication that your
+          code is on the wrong track.
+          <DIV class=""><PRE class="badcode">if (typeid(*data) == typeid(Data1)) {
+  ...
+} else if (typeid(*data) == typeid(Data2)) {
+  ...
+} else if (typeid(*data) == typeid(Data3)) {
+...</PRE></DIV>
+          Code such as this usually breaks when additional subclasses are
+          added to the class hierarchy.  Moreover, when properties of a subclass
+          change, it is difficult to find and modify all the affected code segments.
+        </p>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        <p>
+          The standard alternatives to RTTI (described below) require
+          modification or redesign of the class hierarchy in question.
+          Sometimes such modifications are infeasible or undesirable,
+          particularly in widely-used or mature code.
+        </p>
+        <p>
+          RTTI can be useful in some unit tests. For example, it is useful in
+          tests of factory classes where the test has to verify that a
+          newly created object has the expected dynamic type.  It is also
+          useful in managing the relationship between objects and their mocks.
+        </p>
+          <DIV class=""><PRE>// Example of a unit test
+Geo::Factory geoFactory;
+Geo::Object* circle = geoFactory.CreateCircle();
+if ( ! dynamic_cast&lt;Geo::Circle&gt;(circle) ) {
+  std::cerr &lt;&lt; "Unit test failed."  &lt;&lt; std::endl;
+}  </PRE></DIV>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <p>
+          RTTI has legitimate uses but is prone to abuse, so you must
+          be careful when using it.  You may use it freely
+          in unittests, but avoid it when possible in other code.
+          In particular, think twice before using RTTI in new code.
+          If you find yourself needing to write code that behaves differently
+          based on the class of an object, consider one of the following
+          alternatives to querying the type:
+        <ul>
+          <li>
+            Virtual methods are the preferred way of executing different
+            code paths depending on a specific subclass type.  This puts
+            the work within the object itself.
+          </li>
+          <li>
+            If the work belongs outside the object and instead in some
+            processing code, consider a double-dispatch solution, such
+            as the Visitor design pattern.  This allows a facility
+            outside the object itself to determine the type of class
+            using the built-in type system.
+          </li>
+        </ul>
+        </p>
+        <p>
+          When the logic of a program guarantees that a given instance
+          of a base class is in fact an instance of a particular derived class,
+          then use of a <code>dynamic_cast</code> or <code>static_cast</code> 
+          as an alternative may be also justified in such situations.
+        </p>
+      </P>
+        <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Run-Time_Type_Information__RTTI_')" name="Run-Time_Type_Information__RTTI___extra_button" id="Run-Time_Type_Information__RTTI___extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Run-Time_Type_Information__RTTI___extra_body">
+        <p>
+        An example of code based on <code>dynamic_cast</code>:
+        </p>
+        <DIV class=""><PRE class="badcode">void foo(Bar* bar) {
+  // ... some code where x, y, z are defined ...
+  // ...
+  if (Data1 data1 = dynamic_cast&lt;Data1*&gt;(bar)) {
+    doSomething(data1, x, y);
+  }
+  else if (Data2 data2 = dynamic_cast&lt;Data2*&gt;(bar)) {
+    doSomething(data2, z)
+  }</PRE></DIV>
+        <p>
+        which can be defined using the Visitor pattern: 
+        </p>
+        <DIV class=""><PRE>void foo(Bar* bar) {
+  // ... some code where x, y, z are defined ...
+  // ...
+  DoSomethingVisitor visitor(x, y, z);
+  bar.accept(visitor);
+}</PRE></DIV>
+        </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Casting" id="Casting">Casting</A></H3>
+<SPAN class="link_button" id="link-Casting__button" name="link-Casting__button"><A href="?showone=Casting#Casting">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Casting')" name="Casting__button" id="Casting__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      In general, avoid designs that require casting.
+      You may use <code>static_cast</code> when necessary, but avoid <code>const_cast</code> and <code>reinterpret_cast</code>.
+      C-casts are forbidden.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Casting__body" id="Casting__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        <ul>
+          <li>
+            Try to avoid casts.
+            The need for casts may be a hint that too much type information was lost somewhere.
+          </li>
+          <li>
+            Use <code>static_cast</code> to explicitly convert values between different types.
+            <code>static_cast</code>s are useful for up-casting pointers in an inheritance hierarchy.
+          </li>
+          <li>
+            Avoid <code>const_cast</code>.
+            (Possibly use <code>mutable</code> member variables instead.)
+            <code>const_cast</code> may be used to adapt to const-incorrect interfaces that you cannot (get) fix(ed).
+          </li>
+          <li>
+            <code>reinterpret_cast</code>s are powerful but dangerous.
+            Rather try to avoid them.
+            Code that requires a <code>reinterpret_cast</code> should document the aliasing implications.
+            (<a href="http://en.cppreference.com/w/cpp/language/reinterpret_cast">reinterpret_cast on cppreference.com</a>)
+          </li>
+        </ul>
+        <p> See the <a href="#Run-Time_Type_Information__RTTI_">RTTI section</a>
+            for guidance on the use of <code>dynamic_cast</code>.
+            </p>
+      </P>
+      <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Casting')" name="Casting__extra_button" id="Casting__extra_button">▶</SPAN><P>
+<SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Casting__extra_body">
+        For the dangers of <code>reinterpret_cast</code> consider:
+        <DIV class=""><PRE class="badcode">std::uint32_t fun()
+{
+  std::uint32_t binary = 0;
+  reinterpret_cast&lt;float &amp;&gt;(binary) = 1.f;
+  return binary; // the return value is undefined, according to the C++ standard
+}</PRE></DIV>
+        The following is better, but still undefined behavior according to the type aliasing rules:
+        <DIV class=""><PRE>std::uint32_t fun()
+{
+  float value = 1.f;
+  return reinterpret_cast&lt;std::uint32_t &amp;&gt;(value); // this returns 0x3f800000 on x86
+}</PRE></DIV>
+        In case of doubt, prefer not to use <code>reinterpret_cast</code> in order to avoid mistakes.
+      </div>
+</P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Variable-Length_Arrays_and_alloca__" id="Variable-Length_Arrays_and_alloca__">Variable-Length Arrays and alloca()</A></H3>
+<SPAN class="link_button" id="link-Variable-Length_Arrays_and_alloca____button" name="link-Variable-Length_Arrays_and_alloca____button"><A href="?showone=Variable-Length_Arrays_and_alloca__#Variable-Length_Arrays_and_alloca__">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Variable-Length_Arrays_and_alloca__')" name="Variable-Length_Arrays_and_alloca____button" id="Variable-Length_Arrays_and_alloca____button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Don't use variable-length arrays or <code>alloca()</code>.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Variable-Length_Arrays_and_alloca____body" id="Variable-Length_Arrays_and_alloca____body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+        Stack-allocated objects avoid the overhead of heap allocation.
+        Variable-length arrays and <code>alloca</code> allow variably-sized stack allocations, whereas all other stack allocations in C++ only allow fixed-size objects on the stack.
+      </P>
+      <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+        Variable-length arrays are part of C but not Standard C++.
+        <code>alloca</code> is part of POSIX, but not part of Standard C++.
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+        Use STL containers instead.
+        If you really need to improve the performance consider using a custom allocator for the containers.
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Increment_and_Decrement_operators" id="Increment_and_Decrement_operators">Increment and Decrement operators</A></H3>
+<SPAN class="link_button" id="link-Increment_and_Decrement_operators__button" name="link-Increment_and_Decrement_operators__button"><A href="?showone=Increment_and_Decrement_operators#Increment_and_Decrement_operators">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Increment_and_Decrement_operators')" name="Increment_and_Decrement_operators__button" id="Increment_and_Decrement_operators__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Prefer the prefix form of the increment (<code>++i</code>) and decrement 
+      (<code>--i</code>) operators because it has simpler semantics.
+    </DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Loops_and_Switch_Statements" id="Loops_and_Switch_Statements">Loops and Switch Statements</A></H3>
+<SPAN class="link_button" id="link-Loops_and_Switch_Statements__button" name="link-Loops_and_Switch_Statements__button"><A href="?showone=Loops_and_Switch_Statements#Loops_and_Switch_Statements">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Loops_and_Switch_Statements')" name="Loops_and_Switch_Statements__button" id="Loops_and_Switch_Statements__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      <p>
+        If not conditional on an enumerated value, switch statements
+        should always have a <code>default</code> case.
+        Empty loop bodies should use <code>{}</code>
+        or <code>continue</code>. 
+      </p>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Loops_and_Switch_Statements__body" id="Loops_and_Switch_Statements__body" style="display: none">
+      <p>If not conditional on an enumerated value, switch statements
+        should always have a <code>default</code> case (in the case of
+        an enumerated value, the compiler will warn you if any values
+        are not handled).  If the default case should never execute,
+        simply
+        <code>assert</code>:
+      </p>
+      <DIV class=""><PRE>switch (value) {
+  case 0: {  // 2 space indent
+    ...      // 4 space indent
+    break;
+  }
+  case 1: {
+    ...
+    break;
+  }
+  default: {
+    assert(false);
+  }
+}</PRE></DIV>
+      <p>
+        Empty loop bodies should use <code>{}</code> or
+        <code>continue</code>, but not a single semicolon.
+      </p>
+      <DIV class=""><PRE>while (condition) {
+  // Repeat test until it returns false.
+}
+for (int i = 0; i &lt; someNumber; ++i) {}  // Good — empty body.
+while (condition) continue;  // Good — continue indicates no logic.</PRE></DIV>
+      <DIV class=""><PRE class="badcode">while (condition);  // Bad — looks like part of do/while loop.</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Integer_Types" id="Integer_Types">Integer Types</A></H3>
+<SPAN class="link_button" id="link-Integer_Types__button" name="link-Integer_Types__button"><A href="?showone=Integer_Types#Integer_Types">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Integer_Types')" name="Integer_Types__button" id="Integer_Types__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Per default, use <code>int</code> if you need an integer type.
+      Prefer signed integers over unsigned integers and thus <code>std::int64_t</code> over <code>unsigned int</code> if you need more bits.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Integer_Types__body" id="Integer_Types__body" style="display: none">
+    <p>
+      The C++ standard only loosely specifies the sizes of its built-in integer types.
+    </p>
+    <p>
+      If you need something other than <code>int</code>, consider one of the <a href="http://en.cppreference.com/w/cpp/header/cstdint">integer types in <code>&lt;cstdint&gt;</code></a>.
+    </p>
+      <P class="">
+<SPAN class="stylepoint_subsection">On Unsigned Integers</SPAN>
+        <p>
+          Using unsigned types to represent numbers that are never
+          negative may be a source of problems as demonstrated here:
+        </p>
+        <DIV class=""><PRE class="badcode">for (unsigned int i = foo.getLength() - 1; i &gt;= 0; --i) ...</PRE></DIV>
+        <p>
+          This code will never terminate!
+          A compiler might notice the issue and warn you, but do not count on it.  Equally bad
+          bugs can occur when comparing signed and unsigned
+          variables.
+        </p>
+        <p>
+          To avoid such situation we recommend to consistently use
+          <code>int</code>:
+        </p>
+        <DIV class=""><PRE>for (int i = static_cast&lt;int&gt;(foo.getLength()) - 1; i &gt;= 0; --i) ...</PRE></DIV>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Portability" id="Portability">Portability</A></H3>
+<SPAN class="link_button" id="link-Portability__button" name="link-Portability__button"><A href="?showone=Portability#Portability">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Portability')" name="Portability__button" id="Portability__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Take extra care of the code portability. Bear in mind problems of
+      printing, comparisons, and structure alignment related to 
+      32-bit and 64-bit data representations .
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Portability__body" id="Portability__body" style="display: none">
+      <p> 
+      Below we give a list (incomplete) of possible portability 
+      issues:
+      </p> 
+      <ul>
+        <li> <code>printf()</code> specifiers for some types are
+             not cleanly portable between 32-bit and 64-bit
+             systems. </li>
+        <li> Remember that <code>sizeof(void *)</code> !=
+             <code>sizeof(int)</code>.  Use <code>intptr_t</code> if
+             you need a pointer-sized integer.
+             </li>
+        <li> You may need to be careful with structure alignments,
+             particularly for structures being stored on disk. </li>
+        <li> The data memory representation is computer specific and
+             not defined by C++. The terms endian and endianness, refer 
+             to how bytes of a data word are ordered within memory.
+             Big endian store bytes from the highest to the lowest, 
+             Little endian from the lowest to the highest.
+             </li>
+      </ul>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="0_and_nullptr" id="0_and_nullptr">0 and nullptr</A></H3>
+<SPAN class="link_button" id="link-0_and_nullptr__button" name="link-0_and_nullptr__button"><A href="?showone=0_and_nullptr#0_and_nullptr">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('0_and_nullptr')" name="0_and_nullptr__button" id="0_and_nullptr__button">▶</SPAN>
+  <DIV style="display:inline;" class="">
+    Use <code>0</code> for integers, <code>nullptr</code> for pointers,
+    and <code>'\0'</code> for chars.
+  </DIV>
+  <DIV class=""><DIV class="stylepoint_body" name="0_and_nullptr__body" id="0_and_nullptr__body" style="display: none">
+    <p> 
+      <code>nullptr</code> is a pointer literal of type <code>std::nullptr_t</code>. On the other hand, <code>NULL</code> is a macro equivalent the integer <code>0</code>. Using <code>NULL</code> could bring to unexpected problems. For example imagine you have the following two function declarations:
+      <DIV class=""><PRE class="badcode">void function(int number);
+void function(char *name);
+
+function( NULL );</PRE></DIV>
+    Because <code>NULL</code> is <code>0</code>, and <code>0</code> is an integer, the first version of func will be called instead. 
+    In C++11, <code>nullptr</code> is a new keyword that can (and should!) be used to represent <code>NULL</code> pointers.
+    </p>
+  </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="sizeof" id="sizeof">sizeof</A></H3>
+<SPAN class="link_button" id="link-sizeof__button" name="link-sizeof__button"><A href="?showone=sizeof#sizeof">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('sizeof')" name="sizeof__button" id="sizeof__button">▶</SPAN>
+  <DIV style="display:inline;" class="">
+    Prefer <code>sizeof(<var>varname</var>)</code> to
+    <code>sizeof(<var>type</var>)</code>.
+  </DIV>
+  <DIV class=""><DIV class="stylepoint_body" name="sizeof__body" id="sizeof__body" style="display: none">
+    <p>
+      Use <code>sizeof(<var>varname</var>)</code>
+      when you take the size of a particular variable.
+      <code>sizeof(<var>varname</var>)</code> will update
+      appropriately if someone changes the variable type
+      either now or later.
+      You may use <code>sizeof(<var>type</var>)</code>
+      for code unrelated to any particular variable,
+      such as code that manages an external or internal
+      data format where a variable of an appropriate C++ type
+      is not convenient.
+    </p>
+    <p>
+      <DIV class=""><PRE>Struct data;
+memset(&amp;data, 0, sizeof(data));</PRE></DIV>
+      <DIV class=""><PRE class="badcode">memset(&amp;data, 0, sizeof(Struct));</PRE></DIV>
+      <DIV class=""><PRE>if (rawSize &lt; sizeof(int)) {
+  logMessage &lt;&lt; "compressed record not big enough for count: " &lt;&lt; rawSize; 
+}</PRE></DIV>
+    </p>
+  </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<SPAN class="cpp11_marker">since C++11</SPAN><H3><A name="auto" id="auto">auto</A></H3>
+<SPAN class="link_button" id="link-auto__button" name="link-auto__button"><A href="?showone=auto#auto">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('auto')" name="auto__button" id="auto__button">▶</SPAN>
+  <DIV style="display:inline;" class="">
+    Use <code>auto</code> to avoid type names that are just clutter.
+    Continue to use manifest type declarations when it helps readability,
+    and never use <code>auto</code> for anything but local variables.
+  </DIV>
+  <DIV class=""><DIV class="stylepoint_body" name="auto__body" id="auto__body" style="display: none">
+    <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+      In C++11, a variable whose type is given as <code>auto</code> will be given
+      a type that matches that of the expression used to initialize
+      it. You can use <code>auto</code> either to initialize a
+      variable by copying, or to bind a reference.
+        <DIV class=""><PRE>vector&lt;string&gt; names;
+...
+auto name1 = names[0];  // Makes a copy of names[0].
+const auto&amp; name2 = names[0];  // name2 is a reference to names[0].</PRE></DIV>
+    </P>
+    <P class="">
+<SPAN class="stylepoint_section">Pros:  </SPAN>
+      <p>
+        C++ type names can sometimes be long and cumbersome,
+        especially when they involve templates or namespaces. In a statement like
+        <DIV class=""><PRE class="badcode">sparse_hash_map&lt;string, int&gt;::iterator iter = myMap.find(val);</PRE></DIV>
+        the return type is hard to read, and obscures the primary
+        purpose of the statement. Changing it to
+        <DIV class=""><PRE>auto iter = myMap.find(val);</PRE></DIV>
+        makes it more readable.
+      </p>
+      <p>
+        Without <code>auto</code> we are sometimes forced to write a
+        type name twice in the same expression, adding no value
+        for the reader, as in
+        <DIV class=""><PRE class="badcode">diagnostics::ErrorStatus* status = new diagnostics::ErrorStatus("xyz");</PRE></DIV>
+      </p>
+      <p>
+        Using <code>auto</code> makes it easier to use intermediate
+        variables when appropriate, by reducing the burden of writing
+        their types explicitly.
+        <DIV class=""><PRE>auto status = new diagnostics::ErrorStatus("xyz");</PRE></DIV>
+      </p>
+    </P>
+    <P class="">
+<SPAN class="stylepoint_section">Cons: </SPAN>
+      <p>Sometimes code is clearer when types are manifest, especially when
+        the initialization of a variable depends on functions/variables that were declared
+        far away. In an expression like
+        <DIV class=""><PRE class="badcode">auto i = xValue.Lookup(key);</PRE></DIV>
+        it may not be obvious what <code>i</code>'s type is, if <code>x</code>
+        was declared hundreds of lines earlier.
+      </p>
+
+      <p>Programmers have to understand the difference between <code>auto</code>
+        and <code>const auto&amp;</code> or they'll get copies when
+        they didn't mean to.
+      </p>
+
+      <p>The interaction between <code>auto</code> and C++11
+        brace-initialization can be confusing. The declarations
+        <DIV class=""><PRE class="badcode">auto xValue(3);  // Note: parentheses.
+auto yValue{3};  // Note: curly braces.</PRE></DIV>
+        mean different things — <code>xValue</code> is
+        an <code>int</code>, while <code>yValue</code> is
+        an <code>initializer_list</code>. The same applies to other
+        normally-invisible proxy types.
+      </p>
+
+      <p>If an <code>auto</code> variable is used as part of an
+        interface, e.g. as a constant in a header, then a programmer
+        might change its type while only intending to change its
+        value, leading to a more radical API change than intended.</p>
+    </P>
+    <P class="">
+<SPAN class="stylepoint_section">Decision:  </SPAN>
+      <p><code>auto</code> is permitted for local variables only.
+        Do not use <code>auto</code> for file-scope or namespace-scope
+        variables, or for class members. Never assign a braced initializer list
+        to an <code>auto</code>-typed variable.</p>
+    </P>
+  </DIV></DIV>
+  </DIV>
+
+</DIV>
+
+<DIV class="">
+<H2 name="Exceptions_to_the_Rules" id="Exceptions_to_the_Rules">Exceptions to the Rules</H2>
+  <p>
+    The coding conventions described above have to be followed.  However,
+    like all good rules, these sometimes have exceptions.
+  </p>
+
+  <DIV class="">
+<H3><A name="Existing_Non-conformant_Code" id="Existing_Non-conformant_Code">Existing Non-conformant Code</A></H3>
+<SPAN class="link_button" id="link-Existing_Non-conformant_Code__button" name="link-Existing_Non-conformant_Code__button"><A href="?showone=Existing_Non-conformant_Code#Existing_Non-conformant_Code">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Existing_Non-conformant_Code')" name="Existing_Non-conformant_Code__button" id="Existing_Non-conformant_Code__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      It is permissible to deviate from the rules when dealing with code that does not
+      conform to these guidelines. 
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Existing_Non-conformant_Code__body" id="Existing_Non-conformant_Code__body" style="display: none">
+      <p>
+        To modify code that was written to
+        specifications other than those presented by this guide, it may be necessary to deviate from these rules in order to stay consistent with
+        the local conventions in that code.  In case of doubt the original author or the person currently
+        responsible for the code should be consulted.  Remember that <em>consistency</em>
+        also includes local consistency.
+      </p>
+    </DIV></DIV>
+  </DIV>
+</DIV>
+
+<H2>Parting Words</H2>
+  <p>
+    Use common sense and <em>BE CONSISTENT</em>.
+  </p>
+  <p>
+    The point about having style guidelines is to have a common
+    vocabulary of coding so people can concentrate on what the programmer
+    is saying, rather than on how he/she is saying it.
+  </p>
+  <p>
+    OK, enough writing about writing code; the code itself is much
+    more interesting. Have fun!
+  </p>
+
+
+<H2>References</H2>
+<p>
+[1] Herb Sutter on software, hardware, and concurrency blog [<a href="http://herbsutter.com/2013/05/09/gotw-1-solution">http://herbsutter.com/2013/05/09/gotw-1-solution</a>]
+</p>
+
+
+</BODY>
+</HTML>

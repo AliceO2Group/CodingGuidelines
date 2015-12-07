@@ -1,0 +1,1284 @@
+<HTML xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcq="http://purl.org/dc/qualifiers/1.0/" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:fn="http://www.w3.org/2005/xpath-functions">
+<HEAD>
+<TITLE>ALICE O² C++ Naming &amp; Formatting Rules</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<LINK HREF="http://www.google.com/favicon.ico" type="image/x-icon" rel="shortcut icon">
+<LINK HREF="styleguide.css" type="text/css" rel="stylesheet">
+<SCRIPT language="javascript" type="text/javascript">
+
+                function GetElementsByName(name) {
+                  // Workaround a bug on old versions of opera.
+                  if (document.getElementsByName) {
+                    return document.getElementsByName(name);
+                  } else {
+                    return [document.getElementById(name)];
+                  }
+                }
+
+                /**
+                 * @param {string} namePrefix The prefix of the body name.
+                 * @param {function(boolean): boolean} getVisibility Computes the new
+                 *     visibility state, given the current one.
+                 */
+                function ChangeVisibility(namePrefix, getVisibility) {
+                  var bodyName = namePrefix + '__body';
+                  var buttonName = namePrefix + '__button';
+                  var bodyElements = GetElementsByName(bodyName);
+                  var linkElement = GetElementsByName('link-' + buttonName)[0];
+                  if (bodyElements.length != 1) {
+                    throw Error('ShowHideByName() got the wrong number of bodyElements:  ' + 
+                        bodyElements.length);
+                  } else {
+                    var bodyElement = bodyElements[0];
+                    var buttonElement = GetElementsByName(buttonName)[0];
+                    var isVisible = bodyElement.style.display != "none";
+                    if (getVisibility(isVisible)) {
+                      bodyElement.style.display = "inline";
+                      linkElement.style.display = "block";
+                      buttonElement.innerHTML = '▽';
+                    } else {
+                      bodyElement.style.display = "none";
+                      linkElement.style.display = "none";
+                      buttonElement.innerHTML = '▶';
+                    }
+                  }
+                }
+
+                function ShowHideByName(namePrefix) {
+                  ChangeVisibility(namePrefix, function(old) { return !old; });
+                }
+
+                function ShowByName(namePrefix) {
+                  ChangeVisibility(namePrefix, function() { return true; });
+                }
+
+                function ShowHideAll() {
+                  var allButton = GetElementsByName("show_hide_all_button")[0];
+                  if (allButton.innerHTML == '▽') {
+                    allButton.innerHTML = '▶';
+                    SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "none", '▶');
+                  } else {
+                    allButton.innerHTML = '▽';
+                    SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "inline", '▽');
+                  }
+                }
+
+                // Recursively sets state of all children
+                // of a particular node.
+                function SetHiddenState(root, newState, newButton) {
+                  for (var i = 0; i != root.length; i++) {
+                    SetHiddenState(root[i].childNodes, newState, newButton);
+                    if (root[i].className == 'showhide_button')  {
+                      root[i].innerHTML = newButton;
+                    }
+                    if (root[i].className == 'stylepoint_body' ||
+                        root[i].className == 'link_button')  {
+                      root[i].style.display = newState;
+                    }
+                  }
+                }
+
+
+                function EndsWith(str, suffix) {
+                  var l = str.length - suffix.length;
+                  return l >= 0 && str.indexOf(suffix, l) == l;
+                }
+
+                function RefreshVisibilityFromHashParam() {
+                  var hashRegexp = new RegExp('#([^&#]*)$');
+                  var hashMatch = hashRegexp.exec(window.location.href);
+                  var anchor = hashMatch && GetElementsByName(hashMatch[1])[0];
+                  var node = anchor;
+                  var suffix = '__body';
+                  while (node) {
+                    var id = node.id;
+                    var matched = id && EndsWith(id, suffix);
+                    if (matched) {
+                      var len = id.length - suffix.length;
+                      ShowByName(id.substring(0, len));
+                      if (anchor.scrollIntoView) {
+                        anchor.scrollIntoView();
+                      }
+
+                      return;
+                    }
+                    node = node.parentNode;
+                  }
+                }
+
+                window.onhashchange = RefreshVisibilityFromHashParam;
+
+                window.onload = function() {
+                  // if the URL contains "?showall=y", expand the details of all children
+                  var showHideAllRegex = new RegExp("[\\?&](showall)=([^&#]*)");
+                  var showHideAllValue = showHideAllRegex.exec(window.location.href);
+                  if (showHideAllValue != null) {
+                    if (showHideAllValue[2] == "y") {
+                      SetHiddenState(document.getElementsByTagName("body")[0].childNodes, 
+                          "inline", '▽');
+                    } else {
+                      SetHiddenState(document.getElementsByTagName("body")[0].childNodes, 
+                          "none", '▶');
+                    }
+                  }
+                  var showOneRegex = new RegExp("[\\?&](showone)=([^&#]*)");
+                  var showOneValue = showOneRegex.exec(window.location.href);
+                  if (showOneValue) {
+                    ShowHideByName(showOneValue[2]);
+                  }
+
+
+                  RefreshVisibilityFromHashParam();
+                }
+              </SCRIPT>
+</HEAD>
+<BODY>
+<H1>ALICE O² C++ Naming &amp; Formatting Rules</H1>
+
+<address>
+Vasco Barroso<br>
+Alina GrigoraȘ<br>
+Ivana Hřivnáčová<br>
+Matthias Kretz<br>
+Adriana Telesca<br>
+Barthélémy von Haller<br>
+</address>
+
+<p align="right">
+This document is based on the work of <br>
+B. Weinberger, C. Silverstein,  <br>
+G. Eitzmann, M. Mentovai <br>
+and T.Landray <br>
+at <a href="http://google-styleguide.googlecode.com"> http://google-styleguide.googlecode.com</a>, <br>
+C++ Google Style guide, Revision 3.245 <br>
+under the <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">CC-By 3.0 License</a>
+</p>
+
+<DIV style="margin-left: 50%; font-size: 75%;">
+<P>
+        Each style point has a summary for which additional information is available
+        by toggling the accompanying arrow button that looks this way:
+        <SPAN class="showhide_button" style="margin-left: 0; float: none">▶</SPAN>.
+        You may toggle all summaries with the big arrow button:
+      </P>
+<DIV style=" font-size: larger; margin-left: +2em;">
+<SPAN class="showhide_button" style="font-size: 180%; float: none" onclick="javascript:ShowHideAll()" name="show_hide_all_button" id="show_hide_all_button">▶</SPAN>
+        Toggle all summaries
+      </DIV>
+</DIV>
+<DIV class="toc">
+<DIV class="toc_title">Table of Contents</DIV>
+<TABLE>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Naming">Naming</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#General_Naming_Rules">General Naming Rules</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#File_Names">File Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Type_Names">Type Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Interface_Names">Interface Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Variable_Names">Variable Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Function_Names">Function Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Namespace_Names">Namespace Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Enumerator_Names">Enumerator Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Macro_Names">Macro Names</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Formatting">Formatting</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Line_Length">Line Length</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#One_Statement_Per_Line">One Statement Per Line</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Spaces_vs._Tabs">Spaces vs. Tabs</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Function_Declarations_and_Definitions">Function Declarations and Definitions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Pointer_and_Reference_Expressions">Pointer and Reference Expressions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Boolean_Expressions">Boolean Expressions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Variable_and_Array_Initialization">Variable and Array Initialization</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Preprocessor_Directives">Preprocessor Directives</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Classes">Classes</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Constructor_Initializer_Lists">Constructor Initializer Lists</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Namespaces">Namespaces</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Braces">Braces</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Horizontal_Whitespace">Horizontal Whitespace</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Vertical_Whitespace">Vertical Whitespace</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Where_to_put_const">Where to put const</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#Exceptions_to_the_Rules">Exceptions to the Rules</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Existing_Non-conformant_Code">Existing Non-conformant Code</A></SPAN> </DIV></TD>
+</TR>
+</TABLE>
+</DIV>
+<DIV class="">
+<H2 name="Background" id="Background">Background</H2>
+  <p>
+    The goal of this guide is to provide a number of rules that keep the code base manageable by enforcing
+    <em>consistency</em>.
+
+    It is very important that any programmer
+    can look at another programmer's code and understand it quickly.
+    Maintaining a uniform style and following conventions means that "pattern-matching" can be
+    more easily used to identify different symbols and invariants. 
+</p>
+<p>
+    Creating common, required
+    idioms and patterns makes code much easier to understand.  In some
+    cases there might be good arguments for changing certain style
+    rules. Nonetheless, for reasons of consistency the rules are left unchanged.
+</p>
+
+  <p>
+    Note that this guide is not a C++ tutorial: we assume that the
+    reader is familiar with the language.
+
+  </p>
+
+</DIV>
+
+
+<DIV class="">
+<H2 name="Naming" id="Naming">Naming</H2>
+  <p>
+    The most important consistency rules are those that govern
+    naming. The style of a name immediately informs us what sort of
+    thing the named entity is: a type, a variable, a function, a macro, etc., without requiring us to search for the
+    declaration of that entity. The pattern-matching engine in our
+    brains relies a great deal on these naming rules.
+  </p>
+  <p>
+    Naming rules are pretty arbitrary, but we feel that consistency is more important than individual preferences in this area, so regardless of whether you find them sensible or not, the rules are the rules.
+  </p>
+
+  <DIV class="">
+<H3><A name="General_Naming_Rules" id="General_Naming_Rules">General Naming Rules</A></H3>
+<SPAN class="link_button" id="link-General_Naming_Rules__button" name="link-General_Naming_Rules__button"><A href="?showone=General_Naming_Rules#General_Naming_Rules">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('General_Naming_Rules')" name="General_Naming_Rules__button" id="General_Naming_Rules__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Names should be meaningful; abbreviations should be avoided.
+      They follow camel case convention. Types and variables should be nouns,
+      while functions should be "command" verbs.    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="General_Naming_Rules__body" id="General_Naming_Rules__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_subsection">How to Name</SPAN>
+        <p>
+          Within reason, give as descriptive a name as possible. Do
+          not worry about saving horizontal space as it is far more
+          important to make your code immediately understandable to a
+          new reader. Examples of well-chosen names:
+        </p>
+        <DIV class=""><PRE>int numberOfErrors;               // Good.
+int numberOfCompletedConnections; // Good.</PRE></DIV>
+        <p>
+          Poorly chosen names use ambiguous abbreviations or arbitrary
+          characters that do not convey meaning.
+          Do not use directly the variable names from mathematical formulas.
+          In mathematics, variable names are usually limited to a single letter.
+          To implement a mathematical formula use variable names that
+          clearly indicate what value it holds.
+        </p>
+        <DIV class=""><PRE>float distance = velocity * time; // Good - no ambiguity</PRE></DIV>
+        <DIV class=""><PRE class="badcode">int n;           // Bad - meaningless.
+int nerr;        // Bad - ambiguous abbreviation.
+int nCompConns;  // Bad - ambiguous abbreviation.
+float s = v * t; // Bad - almost meaningless.</PRE></DIV>
+        <p>
+          Type and variable names should typically be nouns: e.g.,
+          <code>FileOpener</code>, <code>numberOfErrors</code>.
+        </p>
+        <p>
+          Function names should typically be imperative (that is they
+          should be commands): e.g., <code>openFile()</code>,
+          <code>setNumberOfErrors()</code>.
+        </p>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">CamelCase Convention</SPAN>
+        <p>
+        All names in C++ code follow camel case convention. This is
+        the practice of writing compound words so that each word 
+        begins with a capital letter. No underscores are allowed.
+        </p>
+        <p>
+        For example:
+        </p>
+        <DIV class=""><PRE>string tableName;   // Good</PRE></DIV>
+        <DIV class=""><PRE class="badcode">string table_name;  // Bad - uses underscore.
+string tablename;   // Bad - all lowercase.</PRE></DIV> 
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">Capitalization Rules</SPAN>
+        <p>
+        Variables and functions start with a lowercase letter.<br>
+        Everything else in C++ code (namespaces, type names, constant
+        expressions) starts with an uppercase letter.
+        </p>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">Abbreviations</SPAN>
+        <p>
+          Do not use abbreviations except for acronyms. For example:
+        </p>
+        <DIV class=""><PRE>// Good. These show proper names with no abbreviations.
+int numberOfDnsConnections;   // Most people know what "DNS" stands for.
+int priceCount;               // Price count, it makes sense.
+int daqRate;                  // In ALICE everyone knows what DAQ stands for.</PRE></DIV>
+        <DIV class=""><PRE class="badcode">// Bad. Abbreviations can be confusing or ambiguous outside a small group.
+int wgcConnections;  // Only your group knows what this stands for.
+int pcReader;        // Lots of things can be abbreviated "pc".</PRE></DIV>
+        <p>
+          A single letter variable name can be used for well-known idioms like iterators of integer type and pimpl-idioms (d-pointer).
+        </p>
+        <DIV class=""><PRE>for (int i = 0 ; i &lt; 10 ; i++) { // Good.
+  prices[i] = 0;
+}</PRE></DIV>
+        <DIV class=""><PRE class="badcode">for (auto i = &amp;prices[0]; i &lt; &amp;prices[10]; ++i) { // Bad
+  *i = 0;                        // i is not of integer type
+}</PRE></DIV>
+        <p>
+          Never abbreviate by leaving out letters. <br>
+          Exception:
+          You may use <code>it</code> for iterator names or their names prefix.
+        </p>
+        <DIV class=""><PRE>// Good
+std::vector&lt;int &gt; myVector;
+auto it = myVector.begin();               
+auto itMyVector = myVector.begin();       
+auto myVectorIterator = myVector.begin(); </PRE></DIV>
+        <DIV class=""><PRE class="badcode">auto myVectorIt = myVector.begin();       // Bad. It is abbreviated, but not a prefix.</PRE></DIV>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="File_Names" id="File_Names">File Names</A></H3>
+<SPAN class="link_button" id="link-File_Names__button" name="link-File_Names__button"><A href="?showone=File_Names#File_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('File_Names')" name="File_Names__button" id="File_Names__button">▶</SPAN>
+    <p>    </p>
+    <DIV style="display:inline;" class="">
+      C++ code file names are derived from the class (or the namespace)
+      names. <br>
+      Program file names and utility file names, which do not define a class
+      or a namespace, start with a lower case letter.<br>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="File_Names__body" id="File_Names__body" style="display: none">
+      <p>
+        C++ implementation files should end in <code>.cxx</code> and header files
+        should end in <code>.h</code>.
+      </p>
+      <p>
+        Inline functions should go directly into your
+        <code>.h</code> file. However, if they include a lot of code, they may go into a third file that
+        ends in <code>.inl</code>.  This rule applies to templates too.
+      </p>
+      <p>
+        Do not use filenames that already exist
+        in <code>/usr/include</code>, such as <code>db.h</code>.
+      </p>
+      <p>
+      Examples of acceptable file names:
+      </p>
+      <DIV class=""><PRE>MyClass.h       // The class declaration.
+MyClass.cxx     // The class definition.
+MyClass.inl     // Inline functions that include lots of code.
+myUtilities.h   // Utility functions/definitions
+testMyClass.cxx // Test program</PRE></DIV>
+
+      <p>
+      Having upper case letters in a file name might theoretically lead to problems for case-insensitive operating systems.
+      However, as the file name corresponds to the class name it seems important to keep the same case as well.
+      Moreover, having two valid class/file names that would collide on a not-case sensitive OS seems extremely unlikely.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Type_Names" id="Type_Names">Type Names</A></H3>
+<SPAN class="link_button" id="link-Type_Names__button" name="link-Type_Names__button"><A href="?showone=Type_Names#Type_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Type_Names')" name="Type_Names__button" id="Type_Names__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Type names follow camel case convention and start with an upper case letter:
+      <code>MyClass</code>, <code>MyEnum</code>.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Type_Names__body" id="Type_Names__body" style="display: none">
+      <p>
+        The names of all types — classes, structs, typedefs, and enums
+        — have the same naming convention. For example:
+      </p>
+      <DIV class=""><PRE>// classes and structs
+class UrlTable { ...
+class UrlTableTester { ...
+struct UrlTableProperties { ...
+
+// typedefs
+typedef HashMap&lt;UrlTableProperties *, string&gt; PropertiesMap;
+
+// enums
+enum UrlTableErrors { ...</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Interface_Names" id="Interface_Names">Interface Names</A></H3>
+<SPAN class="link_button" id="link-Interface_Names__button" name="link-Interface_Names__button"><A href="?showone=Interface_Names#Interface_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Interface_Names')" name="Interface_Names__button" id="Interface_Names__button">▶</SPAN>
+	<DIV style="display:inline;" class="">
+		<a href="#Interfaces">Pure interfaces</a> must be suffixed with "Interface".
+     	</DIV>
+	<DIV class=""><DIV class="stylepoint_body" name="Interface_Names__body" id="Interface_Names__body" style="display: none">
+	   <DIV class=""><PRE>// pure interface
+class UrlTableInterface { ...</PRE></DIV>
+	</DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Variable_Names" id="Variable_Names">Variable Names</A></H3>
+<SPAN class="link_button" id="link-Variable_Names__button" name="link-Variable_Names__button"><A href="?showone=Variable_Names#Variable_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Variable_Names')" name="Variable_Names__button" id="Variable_Names__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Variable names follow camel case convention and start with
+      a lower case letter: <code>myLocalVariable</code>.
+      <ul>
+        <li>Class member variables are prefixed with <code>m</code>.</li>
+        <li>Static class member variables are prefixed with <code>s</code>.</li>
+        <li>No <code>m</code> prefix for struct members.</li>
+        <li>Global variables are prefixed with <code>g</code>.</li>
+        <li>
+<code>constexpr</code> variables are capitalized.</li>
+        <li>No additional prefix for <code>const</code>.</li>
+      </ul>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Variable_Names__body" id="Variable_Names__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_subsection">Local Variable names</SPAN>
+        <p>
+          For example:
+        </p>
+        <DIV class=""><PRE>string tableName;   // Good.</PRE></DIV>
+      </P>  
+      <P class="">
+<SPAN class="stylepoint_subsection">Class Data Members</SPAN>
+        <p>
+          Data members (also called instance variables or member
+          variables) are prefixed with <code>m</code>.
+          If the data member is <code>static</code>, prefix the variable with <code>s</code> instead.
+        </p>
+        <DIV class=""><PRE>class Something {
+  private:
+    string mTableName;      
+    static int sGlobalState;
+};</PRE></DIV>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">Struct Variables</SPAN>
+        <p>
+          Data members in structs are named like regular
+          variables.
+        </p>
+        <DIV class=""><PRE>struct UrlTableProperties {
+  string name;
+  int numberOfEntries;
+}</PRE></DIV>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">Global Variables</SPAN>
+        <p>
+          Global variables,
+          which should be rare in any case, are prefixed with <code>g</code>.
+        </p>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">constexpr</SPAN>
+        <p>
+          A variable declared as <code>constexpr</code> typically is only used as compile-time constant (but may be stored in read-only memory).
+          Therefore it uses the same convention as <code>enum</code>s and uses uppercase CamelCase.
+        </p>
+        <DIV class=""><PRE>constexpr double LightSpeed = 2.99792458e+8;</PRE></DIV>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">const</SPAN>
+        <p>
+          A variable declared as <code>const</code> does not have any additional naming rules.
+          The prefixes describe the scope of the variable.
+          <code>const</code> is just one aspect of the type of the variable.
+        </p>
+        <p>
+          To provide a constant in the public interface consider <code>constexpr</code>,
+          <code>enum</code>, or a (<code>constexpr</code>) function instead.
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Function_Names" id="Function_Names">Function Names</A></H3>
+<SPAN class="link_button" id="link-Function_Names__button" name="link-Function_Names__button"><A href="?showone=Function_Names#Function_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Function_Names')" name="Function_Names__button" id="Function_Names__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Regular functions follow camel case convention and start with a lower case 
+      letter: <code>myFunction()</code>.
+      
+      <ul>
+<li>Accessors and mutators match the name of the variable and are 
+      prefixed with <code>get</code> and <code>set</code>: 
+      <code>getMyMemberVariable()</code>, <code>setMyMemberVariable()</code>.</li>
+      <li> Functions (including accessors) returning a boolean value should be prefixed with
+      <code>is</code> or <code>has</code>. </li>
+      </ul>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Function_Names__body" id="Function_Names__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_subsection">Regular Functions</SPAN>
+        <p>
+          Example of functions:
+        </p>
+        <DIV class=""><PRE>addTableEntry();
+deleteUrl();</PRE></DIV>
+        <p>
+          The rule applies also to <code>constexpr</code> functions:
+        </p>
+        <DIV class=""><PRE>constexpr int getFive() { return 5; }       </PRE></DIV>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">Accessors and Mutators</SPAN>
+        <p>
+          Accessors and mutators match
+          the name of the variable they are getting and setting and use
+          the prefixes <code>get</code> and <code>set</code>. The prefixes 
+          <code>get</code> and <code>set</code> are not exclusive for accessors and mutators and they could 
+          be used for other functions, if applicable.
+	  This shows an excerpt of a class whose instance variable is
+          <code>mNumberOfEntries</code>:
+        </p>
+        <DIV class=""><PRE>class MyClass {
+  public:
+  ...
+    int getNumberOfEntries() const { return mNumberOfEntries; }
+    void setNumberOfEntries(int numberOfEntries) { mNumberOfEntries = numEntries; }
+  private:
+    int mNumberOfEntries;
+};</PRE></DIV>
+      </P>
+      <P class="">
+<SPAN class="stylepoint_subsection">Functions returning a boolean value</SPAN>
+          <p>
+          Functions returning a boolean value should be prefixed with
+          <code>is</code> or <code>has</code>:
+          </p>
+          <DIV class=""><PRE>bool isOpen();
+bool hasZero();</PRE></DIV>
+          <p> This rule applies also to class member functions where <code>is</code> or <code>has</code> replace <code>get</code>:
+          </p>
+          <DIV class=""><PRE>class MyClass {
+  public:
+    void setValid(bool isValid) const { mValid = isValid; }
+    bool isValid() const { return mValid; }
+  private:
+    bool mValid;
+};</PRE></DIV>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Namespace_Names" id="Namespace_Names">Namespace Names</A></H3>
+<SPAN class="link_button" id="link-Namespace_Names__button" name="link-Namespace_Names__button"><A href="?showone=Namespace_Names#Namespace_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Namespace_Names')" name="Namespace_Names__button" id="Namespace_Names__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Namespace names follow camel case convention and start with an upper case 
+      letter: <code>MyNamespace</code>.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Namespace_Names__body" id="Namespace_Names__body" style="display: none">
+      <DIV class=""><PRE>namespace MyNamespace {
+void MyClass::doSomething() 
+{
+  ...
+}
+}</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Enumerator_Names" id="Enumerator_Names">Enumerator Names</A></H3>
+<SPAN class="link_button" id="link-Enumerator_Names__button" name="link-Enumerator_Names__button"><A href="?showone=Enumerator_Names#Enumerator_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Enumerator_Names')" name="Enumerator_Names__button" id="Enumerator_Names__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Enumerations and enumerators (the type and the values) follow camel case 
+      convention and start with an upper case letter: 
+      <code> MyEnumType</code>, <code>MyEnumValue</code>.
+      <ul>
+      <li>Enumerators in unscoped enumerations should have a common
+      prefix/postfix derived from the enumerations name. </li>
+      <li>Enum classes are already scoped and therefore the enumerators do not 
+      need a prefix/postfix.</li>
+      </ul>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Enumerator_Names__body" id="Enumerator_Names__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_section">Definition:  </SPAN>
+        A <i>scoped</i> enum is one that is declared with the <code>class</code>
+        keyword, as opposed to a <i>traditional</i> enum, which is unscoped and
+        doesn't include the <code>class</code> keyword in its declaration.
+      </P>
+      <p>
+        Unscoped enumerators are exposed to the enclosing scope.
+        Therefore they should be prefixed or postfixed (decided by which position makes the code more prose-like)
+        with the enumeration's name (or a sensible part thereof).
+        All names use uppercase CamelCase.
+      </p>
+      <p>
+      Example of an unscoped enumeration:
+      </p>
+      <DIV class=""><PRE>enum Something {
+  SomethingSmall,   // the type name as prefix
+  SomethingBig,
+  SomethingElse
+};
+
+void add(Something);
+...
+add(SomethingSmall);
+add(SomethingElse);</PRE></DIV>
+      <p>
+        Another example of an unscoped enumeration whose enumerators are prefixed with just a (sensible) part
+        of the type name.
+      </p>
+      <DIV class=""><PRE>enum MallocAlignment {
+  AlignOnVector,    // the "Align" prefix taken from the type name
+  AlignOnCacheline, 
+  AlignOnPage
+}
+
+template&lt;MallocAlignment A&gt; void* malloc(size_t);
+...
+void* memory = malloc&lt;AlignOnCacheline&gt;(64);</PRE></DIV>
+      <p>
+        Enum classes (new in C++11) create scoped enumerators.
+        Therefore there is no need for prefixing or postfixing.
+      </p>
+      <DIV class=""><PRE>enum class Something : int {
+  Small,
+  Big,
+  Unknown
+};
+
+void add(Something);
+...
+add(Something::Small);
+add(Something::Unknown);</PRE></DIV>
+
+      The following enum is forbidden unless it is enclosed in a private namespace.
+      The names <code>Ok</code> and <code>OutOfMemory</code> are too generic to be added to the global namespace.
+      <DIV class=""><PRE class="badcode">enum UrlTableErrors {
+  Ok,                 // Bad.
+  OutOfMemory         // Bad.
+};</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Macro_Names" id="Macro_Names">Macro Names</A></H3>
+<SPAN class="link_button" id="link-Macro_Names__button" name="link-Macro_Names__button"><A href="?showone=Macro_Names#Macro_Names">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Macro_Names')" name="Macro_Names__button" id="Macro_Names__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      All uppercase letters and underscores, prefixed with the sub/project name, i.e. <code>MY_PROJECT_PKG1_MY_MACRO</code>.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Macro_Names__body" id="Macro_Names__body" style="display: none">
+      <p>
+	For the rules on Macro usage see <a href="#Preprocessor_Macros">here</a>.
+      </p>
+      <p>
+        They must be named with all uppercase letters and underscores, prefixed with the 
+	sub/project name. 
+      </p>
+      <DIV class=""><PRE>#define O2_VERTEX_ROUND(x) ...
+#define O2_CORE_PI_ROUNDED 3.0</PRE></DIV>
+      Be sure to never put an underscore as prefix nor use a double underscore. 
+      First it doesn't follow our naming convention. 
+      Second, and more importantly, it is reserved to compiler developers.
+      <DIV class=""><PRE class="badcode">#define _WRONG
+#define WRONG__AGAIN
+</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+</DIV>
+
+<DIV class="">
+<H2 name="Formatting" id="Formatting">Formatting</H2>
+  <p>
+    Coding style and formatting are pretty arbitrary. However, a good project
+    is much easier to follow if everyone uses the same style. Individuals
+    may not agree with every aspect of the formatting rules, and some of
+    the rules may be hard to get used to. Even so, it is important that all
+
+    project contributors
+    follow the style rules so that
+
+    they
+    can all read and understand everyone's code easily.
+  </p>
+
+  <DIV class="">
+<H3><A name="Line_Length" id="Line_Length">Line Length</A></H3>
+<SPAN class="link_button" id="link-Line_Length__button" name="link-Line_Length__button"><A href="?showone=Line_Length#Line_Length">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Line_Length')" name="Line_Length__button" id="Line_Length__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Each line of text in your code should be at most 100 characters
+      long.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Line_Length__body" id="Line_Length__body" style="display: none">
+      <p>
+        Try keeping lines below 100 characters. 
+        In some cases it may make sense to use much longer lines (e.g. for block editing).
+        But this should be confined to special sections in the code.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="One_Statement_Per_Line" id="One_Statement_Per_Line">One Statement Per Line</A></H3>
+<SPAN class="link_button" id="link-One_Statement_Per_Line__button" name="link-One_Statement_Per_Line__button"><A href="?showone=One_Statement_Per_Line#One_Statement_Per_Line">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('One_Statement_Per_Line')" name="One_Statement_Per_Line__button" id="One_Statement_Per_Line__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Prefer one statement per line because it improves code readability.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="One_Statement_Per_Line__body" id="One_Statement_Per_Line__body" style="display: none">     
+       <DIV class=""><PRE>// Good. One statement per line.
+if (condition) {    
+  doSomething();    
+} 
+else {
+  doAnotherThing; 
+}</PRE></DIV>
+       <DIV class=""><PRE class="badcode">// Bad. Two statements per line.
+if (condition) doSomething(); else doAnotherThing; </PRE></DIV>
+    </DIV></DIV>  
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Spaces_vs._Tabs" id="Spaces_vs._Tabs">Spaces vs. Tabs</A></H3>
+<SPAN class="link_button" id="link-Spaces_vs._Tabs__button" name="link-Spaces_vs._Tabs__button"><A href="?showone=Spaces_vs._Tabs#Spaces_vs._Tabs">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Spaces_vs._Tabs')" name="Spaces_vs._Tabs__button" id="Spaces_vs._Tabs__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Indent with 2 spaces. Use only spaces, no tabs.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Spaces_vs._Tabs__body" id="Spaces_vs._Tabs__body" style="display: none">
+      <p>
+        Spaces are used for indentation. Do not use tabs in your code.
+        You should set your editor to emit spaces when you hit the tab
+        key.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Function_Declarations_and_Definitions" id="Function_Declarations_and_Definitions">Function Declarations and Definitions</A></H3>
+<SPAN class="link_button" id="link-Function_Declarations_and_Definitions__button" name="link-Function_Declarations_and_Definitions__button"><A href="?showone=Function_Declarations_and_Definitions#Function_Declarations_and_Definitions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Function_Declarations_and_Definitions')" name="Function_Declarations_and_Definitions__button" id="Function_Declarations_and_Definitions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      A function declaration is on one line if possible. Otherwise the parameters that do not
+      fit are on the next line(s).
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Function_Declarations_and_Definitions__body" id="Function_Declarations_and_Definitions__body" style="display: none">
+      <p>
+       The return type, function name and open parenthesis are always on the same line.
+       The open curly brace is at the beginning of the new line after the last parameter 
+       except for inline functions.
+      </p>
+      <p>
+      Example:
+      </p>
+      <DIV class=""><PRE>ReturnType ClassName::functionName(Type parName1, Type parName2) 
+{
+  doSomething();
+  ...
+}</PRE></DIV>
+      <p>
+      Example of an inline function on one line:
+      </p>
+      <DIV class=""><PRE>inline int getValue() const { return mValue; }</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Pointer_and_Reference_Expressions" id="Pointer_and_Reference_Expressions">Pointer and Reference Expressions</A></H3>
+<SPAN class="link_button" id="link-Pointer_and_Reference_Expressions__button" name="link-Pointer_and_Reference_Expressions__button"><A href="?showone=Pointer_and_Reference_Expressions#Pointer_and_Reference_Expressions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Pointer_and_Reference_Expressions')" name="Pointer_and_Reference_Expressions__button" id="Pointer_and_Reference_Expressions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      No spaces around period or arrow. Pointer operators are either followed 
+      or preceded with a space.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Pointer_and_Reference_Expressions__body" id="Pointer_and_Reference_Expressions__body" style="display: none">
+      <p>
+        The following are examples of correctly formatted pointer and
+        reference expressions:
+      </p>
+      <DIV class=""><PRE>int value = *valuePointer;
+int* valuePointer = &amp;value;
+int value = myObject-&gt;getValue();
+int value = myStruct.value;</PRE></DIV>
+      <p>
+        When declaring a pointer or reference there are two widely used and equivalent methods: one, usually preferred in the C++ community, and another, 
+        introduced by Kerningham and Ritchie (the founders of C). 
+      </p>
+      <DIV class=""><PRE>// Good.
+
+// Pointers      
+char* myCharacter;  // typical C++ notation
+char *myCharacter;  // Kerningham &amp; Ritchie's  notation
+
+// References
+const string&amp; myString;
+const string &amp;myString;</PRE></DIV>
+      <DIV class=""><PRE class="badcode">char * myCharacter;       // Bad - spaces on both sides of *
+const string &amp; myString;  // Bad - spaces on both sides of &amp;</PRE></DIV>
+    </DIV></DIV>
+ </DIV>
+
+  <DIV class="">
+<H3><A name="Boolean_Expressions" id="Boolean_Expressions">Boolean Expressions</A></H3>
+<SPAN class="link_button" id="link-Boolean_Expressions__button" name="link-Boolean_Expressions__button"><A href="?showone=Boolean_Expressions#Boolean_Expressions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Boolean_Expressions')" name="Boolean_Expressions__button" id="Boolean_Expressions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      In the case of a boolean expression that is longer than the <a href="#Line_Length">standard line length</a>, lines should be broken up in a consistent way. All operators should be either at the beginning or at the end of the line.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Boolean_Expressions__body" id="Boolean_Expressions__body" style="display: none">
+      <p>
+        In this example, the logical AND operator is always at the end
+        of the lines:
+      </p>
+      <DIV class=""><PRE>if (thisOneThing &gt; thisOtherThing &amp;&amp;
+    aThirdThing == aFourthThing &amp;&amp;
+    yetAnother &amp;&amp; lastOne) {
+  ...
+}</PRE></DIV>
+    </DIV></DIV> 
+  </DIV>
+
+
+  <DIV class="">
+<H3><A name="Variable_and_Array_Initialization" id="Variable_and_Array_Initialization">Variable and Array Initialization</A></H3>
+<SPAN class="link_button" id="link-Variable_and_Array_Initialization__button" name="link-Variable_and_Array_Initialization__button"><A href="?showone=Variable_and_Array_Initialization#Variable_and_Array_Initialization">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Variable_and_Array_Initialization')" name="Variable_and_Array_Initialization__button" id="Variable_and_Array_Initialization__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Prefer initialization with braces except for single-argument assignment.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Variable_and_Array_Initialization__body" id="Variable_and_Array_Initialization__body" style="display: none">
+      <p>
+      Example of single-argument assignments:
+      </p>
+      <DIV class=""><PRE>int x = 3;                           // preferred style
+std::string name = "Some Name"; 
+
+int x { 3 };                         // also possible
+std::string name{ "Some Name" }; 
+std::string name = { "Some Name" };</PRE></DIV>
+
+      <p>
+       Using <code>{}</code> for initialization is more consistent, more correct, and avoids
+       having to know about old-style pitfalls [1].
+      </p>
+      <p>
+       Example of variable initialization:
+      </p>
+      <DIV class=""><PRE>Rectangle window{ 0, 0, 1024, 768 };    // preferred style
+Rectangle window = { 0, 0, 1024, 768 }; // also possible
+Rectangle window(0, 0, 1024, 768);      // avoid unless necessary</PRE></DIV>
+      <p>
+        There is one exception: In rare cases a class may provide an <code>std::initializer_list</code> constructor and other constructors that are hidden by the        <code>std::initializer_list</code> constructor.
+        The hidden constructor can then still be accessed with <code>()</code>.
+      </p>     
+      <DIV class=""><PRE>std::vector&lt;int&gt; v( 10, 20 ); // calls vector(size_t n, const int &amp;value)
+std::vector&lt;int&gt; v{ 10, 20 }; // calls vector(std::initializer_list&lt;int&gt; values)</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Preprocessor_Directives" id="Preprocessor_Directives">Preprocessor Directives</A></H3>
+<SPAN class="link_button" id="link-Preprocessor_Directives__button" name="link-Preprocessor_Directives__button"><A href="?showone=Preprocessor_Directives#Preprocessor_Directives">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Preprocessor_Directives')" name="Preprocessor_Directives__button" id="Preprocessor_Directives__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      The hash mark that starts a preprocessor directive is
+      always at the beginning of the line.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Preprocessor_Directives__body" id="Preprocessor_Directives__body" style="display: none">
+      <p>
+        Even when preprocessor directives are within the body of
+        indented code, the directives should start at the beginning of
+        the line.
+      </p>
+      <DIV class=""><PRE>// Good - directives at beginning of line
+  if (lopsidedScore) {
+#if DISASTER_PENDING      
+    dropEverything();
+# if NOTIFY               // Good but not required -- Spaces after #
+    notifyClient();
+# endif
+#endif
+    goBackToNormal();
+  }</PRE></DIV>
+      <DIV class=""><PRE class="badcode">// Bad - indented directives
+  if (lopsidedScore) {
+    #if DISASTER_PENDING  // The "#if" should be at beginning of line
+    dropEverything();
+    #endif                // Do not indent "#endif"
+    goBackToNormal();
+  }</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Classes" id="Classes">Classes</A></H3>
+<SPAN class="link_button" id="link-Classes__button" name="link-Classes__button"><A href="?showone=Classes#Classes">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Classes')" name="Classes__button" id="Classes__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Access specifiers in a class or a struct are indented by 2 spaces. 
+      The sections they delimit are themselves indented by 2 more spaces.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Classes__body" id="Classes__body" style="display: none">
+      <p>
+        The basic format for a class declaration is:
+      </p>
+      <DIV class=""><PRE>class MyClass : public BaseClass {
+  public:         // 2 spaces indent.
+    MyClass();    // 4 spaces indent.
+    ~MyClass() {}
+
+    void someFunction();
+    void someFunctionThatDoesNothing() {}
+    void setSomeValue(int value) { mSomeValue = value; }
+
+  private:
+    bool someInternalFunction(); // notice that the method is before the data members
+
+    int mSomeValue;
+    int mSomeOtherValue;
+};</PRE></DIV>
+      <p>
+      Things to note:
+      </p>
+      <ul>
+        <li> The base class name should be on the same line as the
+             subclass name, subject to the 100-character limit.
+             </li>
+        <li> Except for the first instance, the access specifier keywords should be preceded
+             by a blank line. This rule is optional for small classes.
+             </li>
+        <li> Do not leave a blank line after access specifier keywords.
+             </li>
+        <li> The <code>public</code> section should be first, followed by
+             the <code>protected</code> and finally the
+             <code>private</code> section. 
+             </li>
+        <li> Generally, each access specifier appears only once in a class 
+             declaration. </li>
+	 <li>
+	      Within each section, the declarations should be in the following order:
+	      <ul>
+               <li> Constructors</li>
+               <li> Destructor</li>
+               <li> Methods</li>
+               <li> Data Members </li>
+             </ul>
+	 </li>
+      </ul>
+      
+	 In certain situations you might need to use a different declaration order. For example, when using <code>decltype</code> :
+	 <DIV class=""><PRE>class A {
+  private:             // Early declaration of a private data member
+    int x;
+
+  public:     
+    decltype(x) foo(); // Needs x to be already declared
+	     
+  private:             // the rest of the private section
+    float y;
+};
+</PRE></DIV>
+      
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Constructor_Initializer_Lists" id="Constructor_Initializer_Lists">Constructor Initializer Lists</A></H3>
+<SPAN class="link_button" id="link-Constructor_Initializer_Lists__button" name="link-Constructor_Initializer_Lists__button"><A href="?showone=Constructor_Initializer_Lists#Constructor_Initializer_Lists">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Constructor_Initializer_Lists')" name="Constructor_Initializer_Lists__button" id="Constructor_Initializer_Lists__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Constructor initializer lists should be with subsequent lines indented
+      properly. Alternatively, they can be all in a single line.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Constructor_Initializer_Lists__body" id="Constructor_Initializer_Lists__body" style="display: none">
+      <p>
+        The preferred format for initializer lists is:
+      </p>
+      <DIV class=""><PRE>MyClass::MyClass(int var)
+  : mSomeVar(var),             // 2 space indent
+    mSomeOtherVar(var + 1)     // lined up
+{
+  ...
+  doSomething();
+  ...
+}</PRE></DIV>
+      <p>
+        Another accepted format is:
+      </p>
+      <DIV class=""><PRE>// When it all fits on one line:
+MyClass::MyClass(int var) : mSomeVar(var), mSomeOtherVar(var + 1) {}</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Namespaces" id="Namespaces">Namespaces</A></H3>
+<SPAN class="link_button" id="link-Namespaces__button" name="link-Namespaces__button"><A href="?showone=Namespaces#Namespaces">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Namespaces')" name="Namespaces__button" id="Namespaces__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      The contents of namespaces are not indented.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Namespaces__body" id="Namespaces__body" style="display: none">
+      <p>
+        Namespaces do not add an extra level of
+        indentation. For example, use:
+      </p>
+      <DIV class=""><PRE>namespace {
+
+void doSomething() {  // Good.  No extra indentation within namespace.
+  ...
+}
+
+} // namespace</PRE></DIV>
+      <p>
+        Do not indent within a namespace:
+      </p>
+      <DIV class=""><PRE class="badcode">namespace {
+
+  void doSomething() { // Bad.  Indented when it should not be 
+    ...
+  }
+
+}</PRE></DIV>
+      <p>
+        When declaring nested namespaces, put each namespace on its own line.
+      </p>
+      <DIV class=""><PRE>namespace Foo {
+namespace Bar {
+...
+}
+}</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Braces" id="Braces">Braces</A></H3>
+<SPAN class="link_button" id="link-Braces__button" name="link-Braces__button"><A href="?showone=Braces#Braces">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Braces')" name="Braces__button" id="Braces__button">▶</SPAN>
+  <DIV style="display:inline;" class="">
+    As a base rule, the left curly brace is on the same line as the start of 
+    the statement. In control constructs, the braces must be used even if their body 
+    consists of only one statement.
+  </DIV>
+  <DIV class=""><DIV class="stylepoint_body" name="Braces__body" id="Braces__body" style="display: none">
+    <p>
+     The left curly brace is on the same line as the start of the statement.
+    </p>
+    Example:
+    <DIV class=""><PRE>if (condition) { // Correct. Curly brace on the same line.
+}
+else {
+}</PRE></DIV>
+    <DIV class=""><PRE class="badcode">if (condition)   // Bad. Curly brace on new line.
+{
+} 
+else 
+{
+}</PRE></DIV>
+    <p> </p>
+    <p>Exception: Class, struct and namespace declarations always have the opening brace on the start of a line. This applies also to functions, unless they are inlined.
+    </p>
+    Example: 
+    <DIV class=""><PRE>class Debug
+{
+};</PRE></DIV> 
+    <p>In control constructs (<code>if</code> statements, <code>for</code> loops etc.),
+     use curly braces even when the body of the statement fits on one line:</p>
+     <DIV class=""><PRE>// Good. Curly braces even for one statement body.
+if (condition) {
+  return true;
+}
+
+for (int i = 0; i &lt; 10; ++i) {
+  doSomething(i);
+}</PRE></DIV>
+    <DIV class=""><PRE class="badcode">// Bad. No curly braces.
+if (true)                         
+  return true;
+
+for (int i = 0; i &lt; 10; ++i)
+  doSomething(i);</PRE></DIV>
+  </DIV></DIV>
+ </DIV>
+
+  <DIV class="">
+<H3><A name="Horizontal_Whitespace" id="Horizontal_Whitespace">Horizontal Whitespace</A></H3>
+<SPAN class="link_button" id="link-Horizontal_Whitespace__button" name="link-Horizontal_Whitespace__button"><A href="?showone=Horizontal_Whitespace#Horizontal_Whitespace">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Horizontal_Whitespace')" name="Horizontal_Whitespace__button" id="Horizontal_Whitespace__button">▶</SPAN>
+    <DIV style="display:inline;" class=""> Recommended guidelines:
+      <ul>
+      <li> One space should be used after each keyword. </li>
+      <li> No extra spaces inside parenthesis and angle brackets (templates). </li>
+      <li> Spaces should be used around binary operators. </li>
+      <li> No space between a unary operator and its operand.</li>
+      <li> Never put trailing whitespace at the end of a line.</li>
+      </ul>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Horizontal_Whitespace__body" id="Horizontal_Whitespace__body" style="display: none">
+    <p>
+      Technically there is no right or wrong for whitespace as C++ does not really care about whitespaces.
+      But on the other hand whitespaces can make a significant difference in whether code feels foreign or easy to understand to a developer.
+      Thus, it is important that all developers become accustomed to the same style.
+      This makes the communication via code much easier and enjoyable for everybody involved.
+      Using one common whitespace style throughout a project also reduces unnecessary whitespace changes and thus makes diffs easier to read.
+    </p>
+    <p>
+    Example:
+    </p>
+    <DIV class=""><PRE> int someFunction(int parameter) // No extra spaces inside parenthesis.
+ {
+   bool test = parameter &gt; 4;    // Use spaces around binary operators.
+   double value = -otherValue;   // No space between a unary operator and its operand.
+
+   if (!test) {                  // Use one space after each keyword.
+     return 1;
+   }
+
+   std::vector&lt;std::vector&lt;int&gt;&gt; someMatrix; 
+                                 // No extra spaces between angle brackets (templates).
+
+   std::string hello = "Hello World.";
+   std::transform(hello.begin(), hello.end(), hello.begin(), [](char c) {
+     return c + 1;
+   });                           // This is the common style to embed lambdas (since C++11) 
+                                 // in function calls.
+   return 0;
+ }</PRE></DIV>
+    <p>
+      Sometimes there are good reasons to deviate from the rules to make the code structure more visible or align similar code in different lines.
+      Feel free to insert/remove whitespace if it increases the readability / clarity of the code.
+    </p>
+    </DIV></DIV>
+  </DIV>
+
+
+  <DIV class="">
+<H3><A name="Vertical_Whitespace" id="Vertical_Whitespace">Vertical Whitespace</A></H3>
+<SPAN class="link_button" id="link-Vertical_Whitespace__button" name="link-Vertical_Whitespace__button"><A href="?showone=Vertical_Whitespace#Vertical_Whitespace">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Vertical_Whitespace')" name="Vertical_Whitespace__button" id="Vertical_Whitespace__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use only one empty line to separate code.
+    </DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Where_to_put_const" id="Where_to_put_const">Where to put const</A></H3>
+<SPAN class="link_button" id="link-Where_to_put_const__button" name="link-Where_to_put_const__button"><A href="?showone=Where_to_put_const#Where_to_put_const">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Where_to_put_const')" name="Where_to_put_const__button" id="Where_to_put_const__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      	Put <code>const</code> before the type when defining a const variable.
+    </DIV>
+	<DIV class=""><DIV class="stylepoint_body" name="Where_to_put_const__body" id="Where_to_put_const__body" style="display: none">
+		<p>Do 
+			<DIV class=""><PRE>const int* foo;
+</PRE></DIV>
+			instead of
+			<DIV class=""><PRE class="badcode">int const *foo;
+</PRE></DIV>
+		</p>
+		<p>
+          Putting the <code>const</code> first is arguably more readable,
+          since it follows English in putting the "adjective"
+          (<code>const</code>) before the "noun" (<code>int</code>).
+        </p>
+	</DIV></DIV>
+  </DIV>
+</DIV>
+
+
+
+<DIV class="">
+<H2 name="Exceptions_to_the_Rules" id="Exceptions_to_the_Rules">Exceptions to the Rules</H2>
+  <p>
+    The coding conventions described above have to be followed.  However,
+    like all good rules, these sometimes have exceptions.
+  </p>
+
+  <DIV class="">
+<H3><A name="Existing_Non-conformant_Code" id="Existing_Non-conformant_Code">Existing Non-conformant Code</A></H3>
+<SPAN class="link_button" id="link-Existing_Non-conformant_Code__button" name="link-Existing_Non-conformant_Code__button"><A href="?showone=Existing_Non-conformant_Code#Existing_Non-conformant_Code">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Existing_Non-conformant_Code')" name="Existing_Non-conformant_Code__button" id="Existing_Non-conformant_Code__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      It is permissible to deviate from the rules when dealing with code that does not
+      conform to this style guide. For example, in naming something that is analogous to an existing C or C++ entity then the existing naming convention
+      scheme can be followed.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Existing_Non-conformant_Code__body" id="Existing_Non-conformant_Code__body" style="display: none">
+      <p>
+        To modify code that was written to
+        specifications other than those presented by this guide, it may be necessary to deviate from these rules in order to stay consistent with
+        the local conventions in that code.  In case of doubt the original author or the person currently
+        responsible for the code should be consulted.  Remember that <em>consistency</em>
+        also includes local consistency.
+      </p>
+      <p>
+        For example, importing a full class from somewhere else
+        , e.g. AliRoot, it is allowed to keep the naming scheme
+        and the style as is. To use the "correct" naming and formatting scheme (described
+        in this document),  then to be consistent, the whole coding standard must be applied to the
+        whole class. <br>
+        Note: in the case that the whole formatting is changed then there should be 
+        one commit for the style changes and one for the actual code
+        changes.
+      </p>
+    </DIV></DIV>
+  </DIV>
+</DIV>
+
+<H2>Parting Words</H2>
+  <p>
+    Use common sense and <em>BE CONSISTENT</em>.
+  </p>
+  <p>
+    When editing code, take a few minutes to look at the
+    code and determine its style.
+  </p>
+  <p>
+    The point about having style guidelines is to have a common
+    vocabulary of coding so people can concentrate on what the programmer
+    is saying, rather than on how he/she is saying it. Global style rules are presented here so people know the vocabulary. However,
+    local style is also important.  If the code added to a file
+    looks drastically different from the existing code around it,
+    the discontinuity throws readers out of their rhythm when they
+    go to read it. Try to avoid this.
+  </p>
+
+  <p>
+    OK, enough writing about writing code; the code itself is much
+    more interesting. Have fun!
+  </p>
+
+
+<H2>References</H2>
+<p>
+[1] Herb Sutter on software, hardware, and concurrency blog [<a href="http://herbsutter.com/2013/05/09/gotw-1-solution">http://herbsutter.com/2013/05/09/gotw-1-solution</a>]
+</p>
+
+
+</BODY>
+</HTML>

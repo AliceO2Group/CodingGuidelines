@@ -1,0 +1,739 @@
+<HTML xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcq="http://purl.org/dc/qualifiers/1.0/" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:fn="http://www.w3.org/2005/xpath-functions">
+<HEAD>
+<TITLE>ALICE O² C++ Comments Guidelines</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<LINK HREF="http://www.google.com/favicon.ico" type="image/x-icon" rel="shortcut icon">
+<LINK HREF="styleguide.css" type="text/css" rel="stylesheet">
+<SCRIPT language="javascript" type="text/javascript">
+
+                function GetElementsByName(name) {
+                  // Workaround a bug on old versions of opera.
+                  if (document.getElementsByName) {
+                    return document.getElementsByName(name);
+                  } else {
+                    return [document.getElementById(name)];
+                  }
+                }
+
+		/**
+                 * @param {string} bodyName The body name.
+		 * @param {string} buttonName The button name.
+                 * @param {function(boolean): boolean} getVisibility Computes the new
+                 *     visibility state, given the current one.
+                 */
+		function ChangeVisibility(bodyName, buttonName, getVisibility) {
+                  var bodyElements = GetElementsByName(bodyName);
+                  var linkElement = GetElementsByName('link-' + buttonName)[0];
+                  if (bodyElements.length != 1) {
+                    throw Error('ShowHideByName() got the wrong number of bodyElements:  ' + 
+                        bodyElements.length);
+                  } else {
+                    var bodyElement = bodyElements[0];
+                    var buttonElement = GetElementsByName(buttonName)[0];
+                    var isVisible = bodyElement.style.display != "none";
+                    if (getVisibility(isVisible)) {
+                      bodyElement.style.display = "inline";
+                      if(linkElement) linkElement.style.display = "block";
+                      buttonElement.innerHTML = '▽';
+                    } else {
+                      bodyElement.style.display = "none";
+                      if(linkElement) linkElement.style.display = "none";
+                      buttonElement.innerHTML = '▶';
+                    }
+                  }
+                }
+
+                function ShowHideByName(namePrefix) {
+		  var bodyName = namePrefix + '__body';
+                  var buttonName = namePrefix + '__button';
+                  ChangeVisibility(bodyName, buttonName, function(old) { return !old; });
+                }
+
+                function ShowByName(namePrefix) {
+		  var bodyName = namePrefix + '__body';
+                  var buttonName = namePrefix + '__button';
+                  ChangeVisibility(bodyName, buttonName, function() { return true; });
+                }
+
+		function ToggleExtraByName(namePrefix) {
+		  var bodyName = namePrefix + '__extra_body';
+                  var buttonName = namePrefix + '__extra_button';
+	          ChangeVisibility(bodyName, buttonName, function(old) { return !old; });
+		}
+
+                function ShowHideAll() {
+                  var allButton = GetElementsByName("show_hide_all_button")[0];
+                  if (allButton.innerHTML == '▽') {
+                    allButton.innerHTML = '▶';
+                    SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "none", '▶');
+                  } else {
+                    allButton.innerHTML = '▽';
+                    SetHiddenState(document.getElementsByTagName("body")[0].childNodes, "inline", '▽');
+                  }
+                }
+
+                // Recursively sets state of all children
+                // of a particular node.
+                function SetHiddenState(root, newState, newButton) {
+                  for (var i = 0; i != root.length; i++) {
+                    SetHiddenState(root[i].childNodes, newState, newButton);
+                    if (root[i].className == 'showhide_button')  {
+                      root[i].innerHTML = newButton;
+                    }
+                    if (root[i].className == 'stylepoint_body' ||
+                        root[i].className == 'link_button')  {
+                      root[i].style.display = newState;
+                    }
+                  }
+                }
+
+
+                function EndsWith(str, suffix) {
+                  var l = str.length - suffix.length;
+                  return l >= 0 && str.indexOf(suffix, l) == l;
+                }
+
+                function RefreshVisibilityFromHashParam() {
+                  var hashRegexp = new RegExp('#([^&#]*)$');
+                  var hashMatch = hashRegexp.exec(window.location.href);
+                  var anchor = hashMatch && GetElementsByName(hashMatch[1])[0];
+                  var node = anchor;
+                  var suffix = '__body';
+                  while (node) {
+                    var id = node.id;
+                    var matched = id && EndsWith(id, suffix);
+                    if (matched) {
+                      var len = id.length - suffix.length;
+                      ShowByName(id.substring(0, len));
+                      if (anchor.scrollIntoView) {
+                        anchor.scrollIntoView();
+                      }
+
+                      return;
+                    }
+                    node = node.parentNode;
+                  }
+                }
+
+                window.onhashchange = RefreshVisibilityFromHashParam;
+
+                window.onload = function() {
+                  // if the URL contains "?showall=y", expand the details of all children
+                  var showHideAllRegex = new RegExp("[\\?&](showall)=([^&#]*)");
+                  var showHideAllValue = showHideAllRegex.exec(window.location.href);
+                  if (showHideAllValue != null) {
+                    if (showHideAllValue[2] == "y") {
+                      SetHiddenState(document.getElementsByTagName("body")[0].childNodes, 
+                          "inline", '▽');
+                    } else {
+                      SetHiddenState(document.getElementsByTagName("body")[0].childNodes, 
+                          "none", '▶');
+                    }
+                  }
+                  var showOneRegex = new RegExp("[\\?&](showone)=([^&#]*)");
+                  var showOneValue = showOneRegex.exec(window.location.href);
+                  if (showOneValue) {
+                    ShowHideByName(showOneValue[2]);
+                  }
+
+
+                  RefreshVisibilityFromHashParam();
+                }
+              </SCRIPT>
+</HEAD>
+<BODY>
+<H1>ALICE O² C++ Comments Guidelines</H1>
+
+<address>
+Vasco Barroso<br>
+Alina GrigoraȘ<br>
+Ivana Hřivnáčová<br>
+Matthias Kretz<br>
+Adriana Telesca<br>
+Barthélémy von Haller<br>
+</address>
+
+<p align="right">
+This document is based on the work of <br>
+B. Weinberger, C. Silverstein,  <br>
+G. Eitzmann, M. Mentovai <br>
+and T.Landray <br>
+at <a href="http://google-styleguide.googlecode.com"> http://google-styleguide.googlecode.com</a>, <br>
+C++ Google Style guide, Revision 3.274 <br>
+under the <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">CC-By 3.0 License</a>
+</p>
+
+
+<DIV style="margin-left: 50%; font-size: 75%;">
+<P>
+        Each style point has a summary for which additional information is available
+        by toggling the accompanying arrow button that looks this way:
+        <SPAN class="showhide_button" style="margin-left: 0; float: none">▶</SPAN>.
+        You may toggle all summaries with the big arrow button:
+      </P>
+<DIV style=" font-size: larger; margin-left: +2em;">
+<SPAN class="showhide_button" style="font-size: 180%; float: none" onclick="javascript:ShowHideAll()" name="show_hide_all_button" id="show_hide_all_button">▶</SPAN>
+        Toggle all summaries
+      </DIV>
+</DIV>
+<DIV class="toc">
+<DIV class="toc_title">Table of Contents</DIV>
+<TABLE>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#General">General</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#General_Guidelines">General Guidelines</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Doxygen">Doxygen</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Mandatory_Documentation">Mandatory Documentation</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Comments_Style">Comments Style</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Punctuation,_Spelling_and_Grammar">Punctuation, Spelling and Grammar</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Special_Characters">Special Characters</A></SPAN> </DIV></TD>
+</TR>
+<TR valign="top" class="">
+<TD><DIV class="toc_category"><A href="#How_to_Document_Your_Code">How to Document Your Code</A></DIV></TD>
+<TD><DIV class="toc_stylepoint">
+<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Files">Files</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Classes">Classes</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Functions">Functions</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Class_Data_Members">Class Data Members</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Namespaces">Namespaces</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Enumerations">Enumerations</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Macros">Macros</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Other">Other</A></SPAN> </DIV></TD>
+</TR>
+</TABLE>
+</DIV>
+<DIV class="">
+<H2 name="Important_Note" id="Important_Note">Important Note</H2>
+  <DIV class="">
+<H3><A name="Displaying_Hidden_Details_in_this_Guide" id="Displaying_Hidden_Details_in_this_Guide">Displaying Hidden Details in this Guide</A></H3>
+<SPAN class="link_button" id="link-Displaying_Hidden_Details_in_this_Guide__button" name="link-Displaying_Hidden_Details_in_this_Guide__button"><A href="?showone=Displaying_Hidden_Details_in_this_Guide#Displaying_Hidden_Details_in_this_Guide">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Displaying_Hidden_Details_in_this_Guide')" name="Displaying_Hidden_Details_in_this_Guide__button" id="Displaying_Hidden_Details_in_this_Guide__button">▶</SPAN>
+     <DIV style="display:inline;" class="">
+       This style guide contains many details that are initially
+       hidden from view.  They are marked by the triangle icon, which you
+       see here on your left.  Click it now.
+       You should see "Hooray" appear below.
+     </DIV>
+     <DIV class=""><DIV class="stylepoint_body" name="Displaying_Hidden_Details_in_this_Guide__body" id="Displaying_Hidden_Details_in_this_Guide__body" style="display: none">
+       <p>
+        Hooray!  Now you know you can expand points to get more
+        details.  Alternatively, there's an "expand all" at the
+        top of this document.
+       </p>
+     </DIV></DIV>
+  </DIV>
+</DIV>
+
+
+<DIV class="">
+<H2 name="General" id="General">General</H2>
+  <DIV class="">
+<H3><A name="General_Guidelines" id="General_Guidelines">General Guidelines</A></H3>
+<SPAN class="link_button" id="link-General_Guidelines__button" name="link-General_Guidelines__button"><A href="?showone=General_Guidelines#General_Guidelines">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('General_Guidelines')" name="General_Guidelines__button" id="General_Guidelines__button">▶</SPAN>
+    <p>
+      Though a pain to write, comments are absolutely vital to keeping our
+      code readable.  The following rules describe what you should
+      comment and where.  But remember: while comments are very
+      important, the best code is self-documenting.  Giving sensible
+      names to types and variables is much better than using obscure
+      names that you must then explain through comments.
+    </p>
+    <p>
+      When writing your comments, write for your audience: the next
+      contributor
+      who will need to understand your code.  Be generous — the next
+      one may be you!
+    </p>
+ </DIV>
+
+
+ <DIV class="">
+<H3><A name="Doxygen" id="Doxygen">Doxygen</A></H3>
+<SPAN class="link_button" id="link-Doxygen__button" name="link-Doxygen__button"><A href="?showone=Doxygen#Doxygen">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Doxygen')" name="Doxygen__button" id="Doxygen__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Following an evaluation of different code documentation tools, Doxygen has been selected.
+      Doxygen [1] allows different comments style. We recommend to use a block of C++ comment lines, where each line starts with an additional slash. 
+      <DIV class=""><PRE>/// ... text ...
+/// ... text ...</PRE></DIV>
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Doxygen__body" id="Doxygen__body" style="display: none">
+      <p>
+      Doxygen uses structural commands that start with a backslash <code>\</code> and indicate what you are documenting. Examples are: <code>\class</code> to document a class, <code>\namespace</code> to document namespaces and so on. <br>
+      </p>
+      <p>
+      It has other complex funcionality such as including formulas, graphs, diagrams and much more. Below we give just a few useful tips how to structure the text in the comments to get it properly formatted in the Web documentation.
+      <ul>
+<li> To make a list:
+      <DIV class=""><PRE>/// - item1
+/// - item2</PRE></DIV>
+      </li>
+      <li> To make a numbered list:
+      <DIV class=""><PRE>/// -# item1
+/// -# item2</PRE></DIV>
+      </li>
+      <li> To keep the text layout place the text in between the lines (mainly when the text represent a sample of code, macro or command lines typed in terminal):
+      <DIV class=""><PRE>/// \verbatim
+/// ...
+/// \endverbatim</PRE></DIV>
+      </li>
+      </ul>
+      </p>
+      <p>For more details on how to use Doxygen, go to <a href="http://www.stack.nl/~dimitri/doxygen/manual/index.html">Doxygen manual</a>.  
+      </p>
+
+    </DIV></DIV>
+  </DIV>
+  <DIV class="">
+<H3><A name="Mandatory_Documentation" id="Mandatory_Documentation">Mandatory Documentation</A></H3>
+<SPAN class="link_button" id="link-Mandatory_Documentation__button" name="link-Mandatory_Documentation__button"><A href="?showone=Mandatory_Documentation#Mandatory_Documentation">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Mandatory_Documentation')" name="Mandatory_Documentation__button" id="Mandatory_Documentation__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      There are a certain number of items that must be documented.
+      They are:
+      <ul>
+        <li>Files.</li>
+        <li>Classes.</li>
+        <li>Functions.</li>
+        <li>Data members.</li>
+        <li>Namespaces.</li>
+        <li>Enumerations and enumerators.</li>
+        <li>Macros.</li>
+      </ul>
+      The following sections show how to document each one of these items.
+      First of all, we will go through general guidelines that will help you to document your code.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Mandatory_Documentation__body" id="Mandatory_Documentation__body" style="display: none">
+    </DIV></DIV>
+  </DIV>
+  
+  <DIV class="">
+<H3><A name="Comments_Style" id="Comments_Style">Comments Style</A></H3>
+<SPAN class="link_button" id="link-Comments_Style__button" name="link-Comments_Style__button"><A href="?showone=Comments_Style#Comments_Style">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Comments_Style')" name="Comments_Style__button" id="Comments_Style__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Use the <code>///</code> syntax for the comments going in the
+      Web documentation, the <code>//</code> syntax for explicative
+      comments in the code and the <code>/* */</code> syntax only for
+      the comments within one line.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Comments_Style__body" id="Comments_Style__body" style="display: none">
+      <p>
+      The <code>/* */</code> does not allow nested comments that's why we
+      prefer to limit its usage only in cases when no other way is possible.
+      </p>
+      <p>
+      For example to avoid warnings about unused arguments we can better
+      place them within  <code>/* */</code> comments:
+      <DIV class=""><PRE>void print(const std::string&amp; /*option*/) {
+  // ...
+}  </PRE></DIV>
+      instead of omitting them:
+      <DIV class=""><PRE class="badcode">void print(const std::string&amp;) {    
+  // ...
+}  </PRE></DIV>
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+    <DIV class="">
+<H3><A name="Punctuation,_Spelling_and_Grammar" id="Punctuation,_Spelling_and_Grammar">Punctuation, Spelling and Grammar</A></H3>
+<SPAN class="link_button" id="link-Punctuation,_Spelling_and_Grammar__button" name="link-Punctuation,_Spelling_and_Grammar__button"><A href="?showone=Punctuation,_Spelling_and_Grammar#Punctuation,_Spelling_and_Grammar">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Punctuation,_Spelling_and_Grammar')" name="Punctuation,_Spelling_and_Grammar__button" id="Punctuation,_Spelling_and_Grammar__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Pay attention to punctuation, spelling, and grammar; it is
+      easier to read well-written comments than badly written ones.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Punctuation,_Spelling_and_Grammar__body" id="Punctuation,_Spelling_and_Grammar__body" style="display: none">
+      <p>
+        Comments should be as readable as narrative text, with proper
+        capitalization and punctuation. In many cases, complete sentences are
+        more readable than sentence fragments. Shorter comments, such as
+        comments at the end of a line of code, can sometimes be less formal, but
+        you should be consistent with your style.
+      </p>
+      <p>
+        Although it can be frustrating to have a code reviewer point
+        out that you are using a comma when you should be using a
+        semicolon, it is very important that source code maintain a
+        high level of clarity and readability.  Proper punctuation,
+        spelling, and grammar help with that goal.
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Special_Characters" id="Special_Characters">Special Characters</A></H3>
+<SPAN class="link_button" id="link-Special_Characters__button" name="link-Special_Characters__button"><A href="?showone=Special_Characters#Special_Characters">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Special_Characters')" name="Special_Characters__button" id="Special_Characters__button">▶</SPAN>
+     <DIV style="display:inline;" class="">
+     While non-ASCII characters are not allowed in names used in the code,
+     use of Unicode e.g. for proper math formulas in comments is encouraged.
+     </DIV>
+     <DIV class=""><DIV class="stylepoint_body" name="Special_Characters__body" id="Special_Characters__body" style="display: none">
+        <p>
+        Example:
+        <DIV class=""><PRE>inline void FitC::Filter(Track &amp;track, const HitInfo &amp;measurementModel,
+    const float_v m, const float_v weight) const
+{
+  const float_v sigma2   = measurementModel.sigma2;
+  const float_v sigma216 = measurementModel.sigma216;
+  const Matrix&lt;float_v, 5&gt; F = track.C.slice&lt;0, 5, 0, 2&gt;()
+                             * measurementModel.transposed(); //  CHᵀ
+  const float_v HCH = measurementModel * F.slice&lt;0, 2&gt;();     // HCHᵀ
+  const float_v residual = measurementModel
+                         * track.slice&lt;0, 2&gt;() - m;   // ζ  = Hr - m
+  float_v denominator = HCH;
+  denominator(HCH &lt; sigma216) += sigma2;
+  const float_v zetawi = residual / denominator;      // (V + HCHᵀ)⁻¹ ζ
+  track -= F * zetawi;                       // r -= CHᵀ (V + HCHᵀ)⁻¹ ζ
+  track.C -= F * (weight / (sigma2 + HCH))* F.transposed();
+                                             // C -= CHᵀ (V + HCHᵀ)⁻¹ HC
+  track.Chi2(HCH &lt; sigma216) += residual * zetawi;
+                                              // χ² += ζ (V + HCHᵀ)⁻¹ ζ
+  track.NDF += weight;
+}</PRE></DIV>
+        </p>
+   </DIV></DIV>
+  </DIV>
+</DIV>
+
+<DIV class="">
+<H2 name="How_to_Document_Your_Code" id="How_to_Document_Your_Code">How to Document Your Code</H2>
+
+
+  <DIV class="">
+<H3><A name="Files" id="Files">Files</A></H3>
+<SPAN class="link_button" id="link-Files__button" name="link-Files__button"><A href="?showone=Files#Files">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Files')" name="Files__button" id="Files__button">▶</SPAN>
+      <DIV style="display:inline;" class="">
+      Start each file with license boilerplate,
+      followed by a description of its contents.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Files__body" id="Files__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_subsection">Legal Notice and Author Line</SPAN>
+        <p>
+          Every file should contain license boilerplate.
+          Choose the appropriate boilerplate for the license used by the project
+          (for example, Apache 2.0, BSD, LGPL, GPL).
+        </p>
+        <p>
+          The license boilerplate should be followed by the author line,
+          containing the full name of the authors and their affiliation(s).
+          If you make significant changes to a file with an author line,
+          consider replacement of the author line with yours.
+        </p>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">File Contents</SPAN>
+        <p>
+          Every file should have a comment at the top describing its contents.
+        </p>
+        <p>
+          Generally a file description just refers to the class which
+          is declared or implemented in the file. More detailed information
+          about the implementation should go in the class description.
+        </p>
+        <p>
+        For class definition files:
+        <DIV class=""><PRE>/// \file MyClass.h
+/// \brief Definition of the MyClass class.
+///
+/// \author John Brown, Institute XYZ</PRE></DIV>
+        </p>
+        <p>
+        For class implementation files:
+        <DIV class=""><PRE>/// \file MyClass.cxx
+/// \brief Implementation of the MyClass class.
+///
+/// \author John Brown, Institute XYZ</PRE></DIV>
+        </p>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Classes" id="Classes">Classes</A></H3>
+<SPAN class="link_button" id="link-Classes__button" name="link-Classes__button"><A href="?showone=Classes#Classes">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Classes')" name="Classes__button" id="Classes__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Every class definition should have an accompanying comment that
+      describes what it is for and how it should be used.
+      The comment should be placed just before <code>class</code> keyword.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Classes__body" id="Classes__body" style="display: none">
+        <p> If the comment spans on more than one line put a summary 
+        line first separated from the detailed description with 
+        an empty comment line.
+        </p>
+      <DIV class=""><PRE>/// Short MyClass description
+///
+/// More detailed MyClass description
+/// which can span on more lines
+
+class MyClass {
+  ...
+};</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Functions" id="Functions">Functions</A></H3>
+<SPAN class="link_button" id="link-Functions__button" name="link-Functions__button"><A href="?showone=Functions#Functions">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Functions')" name="Functions__button" id="Functions__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Declaration comments describe use of the function; comments at
+      the definition of a function describe operation.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Functions__body" id="Functions__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_subsection">Function Declarations</SPAN>
+        <p>
+          Every function declaration should have comments immediately
+          preceding it that describe what the function does and how to
+          use it.  These comments should be descriptive ("Opens the
+          file") rather than imperative ("Open the file").
+        </p>
+        <p>
+          The Doxygen keywords <code>\param</code> and <code>\return</code> can be used to describe
+          the function arguments and the return value. Note that when using these
+          keywords, all arguments have to be documented.
+        </p>
+
+        <p>
+          Here is an example:
+        </p>
+        <DIV class=""><PRE>/// Opens a file.
+/// \param name  The name of a file to open
+/// \return      Return true if open successfully.
+bool OpenFile(const std::string&amp; name);</PRE></DIV>
+        <p>
+          Do not skip comments even for trivial functions like constructors
+          and destructors, even though everyone reading your code knows
+          what constructors and destructors are for, but put a standard
+          agreed text:
+        <DIV class=""><PRE>/// Default constructor
+MyClass();
+/// Standard constructor
+MyClass(int value);
+/// Destructor
+~MyClass(int value);
+/// Disabled constructor
+MyClass() = delete;
+/// Disabled destructor
+~MyClass(int value) = delete;</PRE></DIV>
+        </p>
+        <p>
+         This will allow to automatise checking for functions with no comments
+         provided.
+        </p>
+     </P>
+
+     <P class="">
+<SPAN class="stylepoint_subsection">Function Definitions</SPAN>
+        <p>
+          Function definitions can also have a comment describing
+          what the function does if there's anything tricky about how it does
+          its job.
+        </p>
+        <p>
+          Note you should <em>not</em> just repeat the comments given
+          with the function declaration, in the <code>.h</code> file.
+        </p>
+        <DIV class=""><PRE>/// More details can be given to a function definition in .cxx file
+bool MyClass::OpenFile(const std::string&amp; name);</PRE></DIV>
+      </P>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Class_Data_Members" id="Class_Data_Members">Class Data Members</A></H3>
+<SPAN class="link_button" id="link-Class_Data_Members__button" name="link-Class_Data_Members__button"><A href="?showone=Class_Data_Members#Class_Data_Members">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Class_Data_Members')" name="Class_Data_Members__button" id="Class_Data_Members__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Each class data member (also called an instance variable or
+      member variable) should have a comment describing what it is
+      used for.  If the variable can take sentinel values with
+      special meanings, such as a null pointer or -1, document this.
+
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Class_Data_Members__body" id="Class_Data_Members__body" style="display: none">
+      <p> Short comments can be placed after the data member definition.
+      They have to be preceded with <code>///&lt;</code> unless a special
+      syntax is required by the external packages.
+      For example:
+      <DIV class=""><PRE>private:
+  int mTotalNumberOfEntries; ///&lt; Total number of entries</PRE></DIV>
+      </p>
+
+      <p> Long comments should be placed before the data member definition.
+      For example:
+      <DIV class=""><PRE>private:
+  /// Keeps track of the total number of entries in the table.
+  int mTotalNumberOfEntries;</PRE></DIV>
+      </p>
+
+      <p>
+      If the comment spans on more than one line put a summary
+      line first separated from the detailed description with 
+      an empty comment line.
+      For example:
+      <DIV class=""><PRE>private:
+  /// Keeps track of the total number of entries in the table.
+  ///
+  /// Used to ensure we do not go over the limit. -1 means
+  /// that we don't yet know how many entries the table has.
+  int mTotalNumberOfEntries;</PRE></DIV>
+      </p>
+
+      <p> In special cases, when a given syntax is required by an
+      external package, another form of the comment, compliant with
+      Doxygen rules, should be used. In classes using ROOT IO,
+      use <code>//!&lt;</code> for the data members excluded from IO.
+      For example:
+      <DIV class=""><PRE>private:
+  int    mTotalNumberOfEntries; ///&lt; Total number of entries
+  double mBuffer;               //!&lt; Temporary buffer</PRE></DIV>
+      </p>
+    </DIV></DIV>
+  </DIV>
+ <DIV class="">
+<H3><A name="Namespaces" id="Namespaces">Namespaces</A></H3>
+<SPAN class="link_button" id="link-Namespaces__button" name="link-Namespaces__button"><A href="?showone=Namespaces#Namespaces">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Namespaces')" name="Namespaces__button" id="Namespaces__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Every namespace definition should have an accompanying comment that
+      describes what it is for. The comment should be placed just before 
+      <code>namespace</code> keyword.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Namespaces__body" id="Namespaces__body" style="display: none">
+        <p> If the comment spans on more than one line put a summary 
+        line first separated from the detailed description with 
+        an empty comment line.
+        </p>
+      <DIV class=""><PRE>/// Short MyNamespace description
+///
+/// More detailed MyNamespace description
+/// which can span on more lines
+
+namespace MyNamespace {
+  ...
+}</PRE></DIV>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Enumerations" id="Enumerations">Enumerations</A></H3>
+<SPAN class="link_button" id="link-Enumerations__button" name="link-Enumerations__button"><A href="?showone=Enumerations#Enumerations">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Enumerations')" name="Enumerations__button" id="Enumerations__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Always provide a description of the enumerations and their enumerators values.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Enumerations__body" id="Enumerations__body" style="display: none">
+      <p>
+      Example:
+      <DIV class=""><PRE>/// Enumeration for possible application states.
+enum ApplicationState {
+  ApplPreInit,          ///&lt; application is not yet initalized
+  ApplIdle,             ///&lt; application is ready for event processing
+  ApplEventProcessing,  ///&lt; application is processing events
+  ApplAbort,            ///&lt; application is aborted
+  ApplExit              ///&lt; application is exiting
+};</PRE></DIV>
+      </p>
+    </DIV></DIV>
+  </DIV>
+
+  <DIV class="">
+<H3><A name="Macros" id="Macros">Macros</A></H3>
+<SPAN class="link_button" id="link-Macros__button" name="link-Macros__button"><A href="?showone=Macros#Macros">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Macros')" name="Macros__button" id="Macros__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+      Always provide an explanation of what the macro is used for and how.
+    </DIV>
+    <DIV class=""><DIV class="stylepoint_body" name="Macros__body" id="Macros__body" style="display: none">
+    </DIV></DIV>
+  </DIV>
+   <DIV class="">
+<H3><A name="Other" id="Other">Other</A></H3>
+<SPAN class="link_button" id="link-Other__button" name="link-Other__button"><A href="?showone=Other#Other">
+          link
+        </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Other')" name="Other__button" id="Other__button">▶</SPAN>
+    <DIV style="display:inline;" class="">
+    Complex code blocks/lines, To do comments, etc.
+    </DIV>
+
+    <DIV class=""><DIV class="stylepoint_body" name="Other__body" id="Other__body" style="display: none">
+      <P class="">
+<SPAN class="stylepoint_subsection">Complex Code Blocks/Lines</SPAN>
+        <p>
+          Tricky or complicated code blocks can have comments
+          before them. Note that such comments should be preceded with <code>//</code>,
+          as they are not supposed to go to the Web documentation.
+          Example:
+        </p>
+        <DIV class=""><PRE>// Divide result by two, taking into account that x
+// contains the carry from the add.
+for (int i = 0; i &lt; result-&gt;size(); i++) {
+  x = (x &lt;&lt; 8) + (*result)[i];
+  (*result)[i] = x &gt;&gt; 1;
+  x &amp;= 1;
+}</PRE></DIV>
+        <p>
+          Also, lines that are non-obvious can get a comment at the
+          end of the line. These end-of-line comments should be
+          separated from the code by 2 spaces.  Example:
+        </p>
+        <DIV class=""><PRE>// If we have enough memory, mmap the data portion too.
+mmapBudget = max&lt;int64&gt;(0, mmapBudget - index_-&gt;length());
+if (mmapBudget &gt;= mDataSize &amp;&amp; !MmapData(mmapChunkBytes, mlock))
+  return;  // Error already logged.</PRE></DIV>
+        <p>
+          Note that there are both comments that describe what the
+          code is doing, and comments that mention that an error has
+          already been logged when the function returns.
+        </p>
+        <p>
+          If you have several comments on subsequent lines, it can
+          often be more readable to line them up:
+        </p>
+        <DIV class=""><PRE>doSomething();                  // Comment here so the comments line up.
+doSomethingElseThatIsLonger();  // Comment here so there are two spaces between
+                                // the code and the comment.</PRE></DIV>
+      </P>
+
+      <P class="">
+<SPAN class="stylepoint_subsection">To Do Comments</SPAN>
+        <p>
+          Precede comments with <code>\todo</code> keyword for code that is temporary, a
+          short-term solution, or good-enough but not perfect. A list of these items will be
+          then automatically included in the generated Web documentation.
+        </p>
+        <DIV class=""><PRE>/// \todo Use a "*" here for concatenation operator.
+/// \todo Zeke change this to use relations.</PRE></DIV>
+        <p>
+          If your comment is of the form "At a future date do
+          something" make sure that you either include a very specific
+          date ("Fix by November 2005") or a very specific event
+          ("Remove this code when all clients can handle XML responses.").
+        </p>
+      </P>
+     </DIV></DIV>
+    </DIV>
+</DIV>
+
+
+<H2>References</H2>
+<p>
+  [1] Doxygen [<a href="http://www.doxygen.org">http://www.doxygen.org</a>]
+</p>
+
+
+</BODY>
+</HTML>
