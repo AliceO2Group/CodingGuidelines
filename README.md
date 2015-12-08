@@ -33,3 +33,8 @@ clang-format -style=file -i SOURCEFILE # -i if you want to replace content
 #### CLion
 1. [Download](https://github.com/AliceO2Group/CodingGuidelines/raw/master/settings-codestyle-clion.jar),
 2. Go to File -> Import Settings. 
+
+## FAQ
+* __Q__ I strongly disagree with rule X !
+* __A__ This is not a question. Nevertheless, feel free to contact the CWG11 (alice-o2-cwg11@cern.ch) to share your concern(s). Rules have already been amended, abandoned or added based on the users feedback.
+
