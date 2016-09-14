@@ -642,12 +642,15 @@ using namespace Foo;</PRE></DIV>
       Use unnamed namespaces in <code>.cxx</code> files whenever possible.
     </P>
     <p>
-    <DIV class=""><PRE>namespace Project {
-namespace {                           // This is in a .cxx file.
+    <DIV class=""><PRE>namespace Project 
+{
+namespace                            // This is in a .cxx file.
+{
 int someFunction(int value) { return value + 1; }
 }  // unnamed namespace
 
-void someOtherFunction() {
+void someOtherFunction() 
+{
   int value = 0;
   value = someFunction(value);
   ...
@@ -681,7 +684,8 @@ void someOtherFunction() {
 namespace Fbz = ::Foo::Bar::Baz;
  
 // Shorten access to some commonly used names (in a .h file).
-namespace Librarian {
+namespace Librarian 
+{
   // The following alias is available to all files including
   // this header (in namespace Librarian):
   // alias names should therefore be chosen consistently
@@ -744,10 +748,12 @@ namespace Librarian {
       the global namespace. Static member functions are an alternative
       as long as it makes sense to include the function within the 
       class.</p>
-      <DIV class=""><PRE>namespace MyNamespace {
+      <DIV class=""><PRE>namespace MyNamespace 
+{
   void doGlobalFoo(); // Good -- doGlobalFoo is within a namespace.
   
-  class MyClass {
+  class MyClass 
+{
     public: 
       ...
       // Good -- doGlobalBar is a static member of class MyClass and 
@@ -880,7 +886,8 @@ std::string name = { "Some Name" };</PRE></DIV>
     <code>initializer_list</code>, which is automatically created from
     <i>braced-init-list</i>:
       <DIV class=""><PRE>#include &lt;initializer_list&gt;
-class MyType {
+class MyType 
+{
  public:
   // initializer_list is a reference to the underlying init list,
   // so it can be passed by value.
@@ -894,7 +901,8 @@ MyType myObject{2, 3, 5, 7};</PRE></DIV></p>
     data types that do not have <code>initializer_list</code> constructors.
       <DIV class=""><PRE>// Calls ordinary constructor as long as MyOtherType has no
 // initializer_list constructor.
-class MyOtherType {
+class MyOtherType 
+{
  public:
   explicit MyOtherType(std::string name);
   MyOtherType(int value, std::string name);
@@ -936,7 +944,8 @@ class Something
   private:
     static int sId; // but this one too (details at the end of the rule)
 };
-namespace NotGlobalScope {
+namespace NotGlobalScope 
+{
   Foo fooObject;    // and finally this one as well
 }</PRE></DIV>
       </P>
@@ -998,11 +1007,13 @@ namespace NotGlobalScope {
       <p>
         As an example do this:
       </p>  
-        <DIV class=""><PRE>struct Pod {
+        <DIV class=""><PRE>struct Pod 
+{
   int indexes[5];
   float width;
 };
-struct LiteralType {
+struct LiteralType 
+{
   int value;
   constexpr LiteralType() : value(1) {}
 };
@@ -1012,7 +1023,8 @@ LiteralType gOtherData;</PRE></DIV>
       <p>
       	But not this :
       </p>  
-      	<DIV class=""><PRE class="badcode">class NotPod {
+      	<DIV class=""><PRE class="badcode">class NotPod 
+{
   NotPod();
 };
 NotPod gBadData;  // dynamic constructor</PRE></DIV>
@@ -1039,7 +1051,8 @@ NotPod gBadData;  // dynamic constructor</PRE></DIV>
         </p>
         <DIV class=""><PRE class="badcode">// Struct.h:
 #include &lt;string&gt;
-struct Struct {
+struct Struct 
+{
   static std::string sString;
 };
 
@@ -1052,7 +1065,8 @@ std::string Struct::sString = "Hello World";
 
 std::string gAnotherString = Struct::sString;
 
-int main() {
+int main() 
+{
   std::cout &lt;&lt; gAnotherString &lt;&lt; std::endl;
   return 0;
 }</PRE></DIV>
@@ -1207,7 +1221,8 @@ int main()
 <DIV class="cpp11">
         Since C++11, it is possible to initialize struct/class member variables in the class definition.
         Thus, if there is no explicit initialization of this member variable in the constructor, this assignment will be used for initialization.
-        <DIV class=""><PRE>class MyClass {
+        <DIV class=""><PRE>class MyClass 
+{
   public:
     MyClass() = default;
     MyClass(int z) : a(z) {}
@@ -1220,7 +1235,8 @@ int main()
     int a = 1234;  // in-class initialization
 };
 
-int main() {
+int main() 
+{
   MyClass firstClass;
   MyClass secondClass{5678};
 
@@ -1255,7 +1271,8 @@ int main() {
          In-class member initialization:
         </p>
         <DIV class=""><PRE>// MyClass.h
-class MyClass {
+class MyClass 
+{
 // ...
   private:
     int mValue = 1234;
@@ -1264,7 +1281,8 @@ class MyClass {
          Initialization list:
         </p>
         <DIV class=""><PRE>// MyClass.h
-class MyClass : public MyBase  {
+class MyClass : public MyBase  
+{
   // ...
   private:
     int mValue;
@@ -1318,7 +1336,8 @@ MyClass::MyClass()
        Instead of
       </p>
       <DIV class=""><PRE class="badcode">// MyClass.h
-class MyClass {
+class MyClass 
+{
   public:
     MyClass();
     ~MyClass();
@@ -1337,7 +1356,8 @@ MyClass::~MyClass()
       do
       </p>
       <DIV class=""><PRE>// MyClass.h
-class MyClass {
+class MyClass 
+{
   public:
     MyClass();
     ~MyClass() = delete;   // mSomething is deleted automatically
@@ -1372,12 +1392,14 @@ MyClass::MyClass()
       </p>
       <p>
       Calling a virtual function non-virtually is fine:
-        <DIV class=""><PRE class="badcode">class MyClass {
+        <DIV class=""><PRE class="badcode">class MyClass 
+{
   public:
     MyClass() { doSomething(); }    // Bad
     virtual void doSomething();
 };</PRE></DIV>
-        <DIV class=""><PRE>class MyClass {
+        <DIV class=""><PRE>class MyClass 
+{
   public:
     MyClass() { MyClass::doSomething(); }    // Good
     virtual void doSomething();
@@ -1404,7 +1426,8 @@ MyClass::MyClass()
 <SPAN class="stylepoint_section">Definition:  </SPAN>
         Normally, if a constructor takes one argument, it can be used
         as a conversion.  For instance, if you define
-        <DIV class=""><PRE class="badcode">class Foo {
+        <DIV class=""><PRE class="badcode">class Foo 
+{
   public:
     Foo(const std::string &amp;name);
 };</PRE></DIV>
@@ -1414,7 +1437,8 @@ MyClass::MyClass()
         will pass the <code>Foo</code> to your function for you.
         Declaring a constructor <code>explicit</code> prevents
         an implicit conversion.
-        <DIV class=""><PRE>class MyClass {
+        <DIV class=""><PRE>class MyClass 
+{
   public:
     explicit MyClass(int number); //allocate number bytes 
     explicit MyClass(const std::string &amp;name); // initialize with string name
@@ -1525,7 +1549,8 @@ ClassName &amp;operator=(const ClassName &amp;) = delete;</PRE></DIV>
           using a special variant of the initialization list
           syntax. For example:
         </p>
-        <DIV class=""><PRE>Foo::Foo(const string&amp; name) : mName(name) {
+        <DIV class=""><PRE>Foo::Foo(const string&amp; name) : mName(name) 
+{
   ...
 }
 
@@ -1536,7 +1561,8 @@ Foo::Foo() : Foo("example") { }</PRE></DIV>
           Since C++11 it is possible to explicitly inherit the constructors of a base class.
           This can be a significant simplification for subclasses that don't need custom constructor logic.
         </p>
-        <DIV class=""><PRE>class Base {
+        <DIV class=""><PRE>class Base 
+{
   public:
     Base();
     explicit Base(int number);
@@ -1544,7 +1570,8 @@ Foo::Foo() : Foo("example") { }</PRE></DIV>
     ...
 };
 
-class Derived : public Base {
+class Derived : public Base 
+{
   public:
     using Base::Base;  // Base's constructors are redeclared here.
 };</PRE></DIV>
@@ -2039,15 +2066,18 @@ if (computePedestals() == -1) {
         Consider the following header file:
         <DIV class=""><PRE>constexpr int GlobalScopeValue = 0;
 
-namespace Namespace {
+namespace Namespace 
+{
   constexpr int ScopeValue = 1;
 }
 
-struct Struct {
+struct Struct 
+{
   static constexpr int ScopeValue = 1;
 };
 
-template&lt;typename T&gt; struct TemplateStruct {
+template&lt;typename T&gt; struct TemplateStruct 
+{
   static constexpr int ScopeValue = 1;
 };
 
@@ -2210,7 +2240,8 @@ static constexpr double Centimeter  = 10.*Millimeter;</PRE></DIV>
       Example of class-specific constants:
       </p>
       <DIV class=""><PRE>// File Widget.h
-class Widget {
+class Widget 
+{
   private:
     static const int sDefaultWidth;           // value provided in definition
     static constexpr int DefaultHeight = 600; // value provided in declaration
@@ -2402,7 +2433,8 @@ if ( ! dynamic_cast&lt;Geo::Circle&gt;(circle) ) {
         <p>
         which can be defined using the Visitor pattern: 
         </p>
-        <DIV class=""><PRE>void foo(Bar* bar) {
+        <DIV class=""><PRE>void foo(Bar* bar) 
+{
   // ... some code where x, y, z are defined ...
   // ...
   DoSomethingVisitor visitor(x, y, z);
