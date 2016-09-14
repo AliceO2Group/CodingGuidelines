@@ -388,9 +388,12 @@ testMyClass.cxx // Test program</PRE></DIV>
         — have the same naming convention. For example:
       </p>
       <DIV class=""><PRE>// classes and structs
-class UrlTable { ...
-class UrlTableTester { ...
-struct UrlTableProperties { ...
+class UrlTable 
+{ ...
+class UrlTableTester 
+{ ...
+struct UrlTableProperties 
+{ ...
 
 // typedefs
 typedef HashMap&lt;UrlTableProperties *, string&gt; PropertiesMap;
@@ -410,7 +413,8 @@ enum UrlTableErrors { ...</PRE></DIV>
      	</DIV>
 	<DIV class=""><DIV class="stylepoint_body" name="Interface_Names__body" id="Interface_Names__body" style="display: none">
 	   <DIV class=""><PRE>// pure interface
-class UrlTableInterface { ...</PRE></DIV>
+class UrlTableInterface 
+{ ...</PRE></DIV>
 	</DIV></DIV>
   </DIV>
 
@@ -447,7 +451,8 @@ class UrlTableInterface { ...</PRE></DIV>
           variables) are prefixed with <code>m</code>.
           If the data member is <code>static</code>, prefix the variable with <code>s</code> instead.
         </p>
-        <DIV class=""><PRE>class Something {
+        <DIV class=""><PRE>class Something 
+{
   private:
     string mTableName;      
     static int sGlobalState;
@@ -460,7 +465,8 @@ class UrlTableInterface { ...</PRE></DIV>
           Data members in structs are named like regular
           variables.
         </p>
-        <DIV class=""><PRE>struct UrlTableProperties {
+        <DIV class=""><PRE>struct UrlTableProperties 
+{
   string name;
   int numberOfEntries;
 }</PRE></DIV>
@@ -540,7 +546,8 @@ deleteUrl();</PRE></DIV>
 	  This shows an excerpt of a class whose instance variable is
           <code>mNumberOfEntries</code>:
         </p>
-        <DIV class=""><PRE>class MyClass {
+        <DIV class=""><PRE>class MyClass 
+{
   public:
   ...
     int getNumberOfEntries() const { return mNumberOfEntries; }
@@ -559,7 +566,8 @@ deleteUrl();</PRE></DIV>
 bool hasZero();</PRE></DIV>
           <p> This rule applies also to class member functions where <code>is</code> or <code>has</code> replace <code>get</code>:
           </p>
-          <DIV class=""><PRE>class MyClass {
+          <DIV class=""><PRE>class MyClass 
+{
   public:
     void setValid(bool isValid) const { mValid = isValid; }
     bool isValid() const { return mValid; }
@@ -580,7 +588,8 @@ bool hasZero();</PRE></DIV>
       letter: <code>MyNamespace</code>.
     </DIV>
     <DIV class=""><DIV class="stylepoint_body" name="Namespace_Names__body" id="Namespace_Names__body" style="display: none">
-      <DIV class=""><PRE>namespace MyNamespace {
+      <DIV class=""><PRE>namespace MyNamespace 
+{
 void MyClass::doSomething() 
 {
   ...
@@ -941,7 +950,8 @@ std::vector&lt;int&gt; v{ 10, 20 }; // calls vector(std::initializer_list&lt;int
       <p>
         The basic format for a class declaration is:
       </p>
-      <DIV class=""><PRE>class MyClass : public BaseClass {
+      <DIV class=""><PRE>class MyClass : public BaseClass 
+{
   public:         // 2 spaces indent.
     MyClass();    // 4 spaces indent.
     ~MyClass() {}
@@ -986,7 +996,8 @@ std::vector&lt;int&gt; v{ 10, 20 }; // calls vector(std::initializer_list&lt;int
       </ul>
       
 	 In certain situations you might need to use a different declaration order. For example, when using <code>decltype</code> :
-	 <DIV class=""><PRE>class A {
+	 <DIV class=""><PRE>class A 
+{
   private:             // Early declaration of a private data member
     int x;
 
@@ -1045,7 +1056,8 @@ MyClass::MyClass(int var) : mSomeVar(var), mSomeOtherVar(var + 1) {}</PRE></DIV>
       </p>
       <DIV class=""><PRE>namespace {
 
-void doSomething() {  // Good.  No extra indentation within namespace.
+void doSomething()  // Good.  No extra indentation within namespace.
+{
   ...
 }
 
@@ -1055,7 +1067,8 @@ void doSomething() {  // Good.  No extra indentation within namespace.
       </p>
       <DIV class=""><PRE class="badcode">namespace {
 
-  void doSomething() { // Bad.  Indented when it should not be 
+  void doSomething() // Bad.  Indented when it should not be 
+  {
     ...
   }
 
