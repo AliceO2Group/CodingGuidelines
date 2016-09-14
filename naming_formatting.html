@@ -590,6 +590,7 @@ bool hasZero();</PRE></DIV>
     <DIV class=""><DIV class="stylepoint_body" name="Namespace_Names__body" id="Namespace_Names__body" style="display: none">
       <DIV class=""><PRE>namespace MyNamespace 
 {
+
 void MyClass::doSomething() 
 {
   ...
@@ -1054,7 +1055,8 @@ MyClass::MyClass(int var) : mSomeVar(var), mSomeOtherVar(var + 1) {}</PRE></DIV>
         Namespaces do not add an extra level of
         indentation. For example, use:
       </p>
-      <DIV class=""><PRE>namespace {
+      <DIV class=""><PRE>namespace 
+{
 
 void doSomething()  // Good.  No extra indentation within namespace.
 {
@@ -1065,7 +1067,8 @@ void doSomething()  // Good.  No extra indentation within namespace.
       <p>
         Do not indent within a namespace:
       </p>
-      <DIV class=""><PRE class="badcode">namespace {
+      <DIV class=""><PRE class="badcode">namespace 
+{
 
   void doSomething() // Bad.  Indented when it should not be 
   {
@@ -1076,8 +1079,10 @@ void doSomething()  // Good.  No extra indentation within namespace.
       <p>
         When declaring nested namespaces, put each namespace on its own line.
       </p>
-      <DIV class=""><PRE>namespace Foo {
-namespace Bar {
+      <DIV class=""><PRE>namespace Foo 
+{
+namespace Bar 
+{
 ...
 }
 }</PRE></DIV>
