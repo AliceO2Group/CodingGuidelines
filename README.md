@@ -1,4 +1,4 @@
-# CodingGuidelines
+# ALICE O2 Coding Guidelines
 Coding guidelines for the ALICE O2 project.
 
 ### Documents
@@ -36,5 +36,4 @@ clang-format -style=file -i SOURCEFILE # -i if you want to replace content
 
 ## FAQ
 * __Q__ I strongly disagree with rule X !
-* __A__ This is not a question. Nevertheless, feel free to contact the CWG11 (alice-o2-cwg11@cern.ch) to share your concern(s). Rules have already been amended, abandoned or added based on the users feedback.
-
+* __A__ Feel free to contact the CWG11 (alice-o2-cwg11@cern.ch) to share your concern(s). Rules have already been amended, abandoned or added based on the users feedback. However, please comply with the rules until a change is agreed by CWG11.
