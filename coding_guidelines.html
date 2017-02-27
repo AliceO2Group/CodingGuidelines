@@ -564,9 +564,9 @@ class Foo
       Example of a typical class definition within a project and
       sub-project namespace:
     </p> 
-      <DIV class=""><PRE>namespace Project
+      <DIV class=""><PRE>namespace project
 {
-namespace SubProject
+namespace subproject
 {
 
 class MyClass
@@ -574,8 +574,8 @@ class MyClass
 ...
 };
 
-} // namespace SubProject
-} // namespace Project</PRE></DIV>
+} // namespace subproject
+} // namespace project</PRE></DIV>
       <p> 
         A nonmember function that is logically tied to a specific type should be in the
         same namespace as that type.
@@ -596,7 +596,7 @@ class MyClass
       <p>
       <DIV class=""><PRE># include "Bar.h"
 // OK in .cxx after include statements
-using namespace Foo;
+using namespace foo;
 
 // sometimes a using declaration is preferable, to be precise
 // about the symbols that get imported
@@ -604,7 +604,7 @@ using Foo::Type;</PRE></DIV>
       </p>
       <p>
       <DIV class=""><PRE class="badcode">// Forbidden in .h -- This pollutes the namespace.
-using namespace Foo;</PRE></DIV>
+using namespace foo;</PRE></DIV>
       </p>
       <SPAN class="showhide_extrabutton" onclick="javascript:ToggleExtraByName('Using_declarations_and_directives')" name="Using_declarations_and_directives__extra_button" id="Using_declarations_and_directives__extra_button">▶</SPAN><P>
 <SPAN class="stylepoint_section">Extra details and exceptions to the rules:  </SPAN><div style="display:none;" class="stylepoint_extra" name="Using_declarations_and_directives__extra_body">
@@ -642,7 +642,7 @@ using namespace Foo;</PRE></DIV>
       Use unnamed namespaces in <code>.cxx</code> files whenever possible.
     </P>
     <p>
-    <DIV class=""><PRE>namespace Project 
+    <DIV class=""><PRE>namespace project 
 {
 namespace                            // This is in a .cxx file.
 {
@@ -681,23 +681,23 @@ void someOtherFunction()
     <DIV class=""><DIV class="stylepoint_body" name="Namespace_aliases__body" id="Namespace_aliases__body" style="display: none">
 <p>
 <DIV class=""><PRE>// Shorten access to some commonly used names in .cxx files.
-namespace Fbz = ::Foo::Bar::Baz;
+namespace fbz = ::foo::bar::baz;
  
 // Shorten access to some commonly used names (in a .h file).
-namespace Librarian 
+namespace librarian 
 {
   // The following alias is available to all files including
-  // this header (in namespace Librarian):
+  // this header (in namespace librarian):
   // alias names should therefore be chosen consistently
   // within a project.
-  namespace Pds = ::PipelineDiagnostics::Sidetable;
+  namespace pds = ::pipeline_diagnostics::Sidetable;
 
   inline void myInlineFunction() {
     // namespace alias local to a function (or method).
-    namespace Fbz = ::Foo::Bar::Baz;
+    namespace fbz = ::foo::bar::baz;
     ...
   }
-}  // namespace Librarian</PRE></DIV>
+}  // namespace librarian</PRE></DIV>
 </p>
       <p>
       Note that an alias in a .h file is visible to everyone
@@ -748,7 +748,7 @@ namespace Librarian
       the global namespace. Static member functions are an alternative
       as long as it makes sense to include the function within the 
       class.</p>
-      <DIV class=""><PRE>namespace MyNamespace 
+      <DIV class=""><PRE>namespace mynamespace 
 {
   void doGlobalFoo(); // Good -- doGlobalFoo is within a namespace.
   
@@ -944,7 +944,7 @@ class Something
   private:
     static int sId; // but this one too (details at the end of the rule)
 };
-namespace NotGlobalScope 
+namespace notglobalscope 
 {
   Foo fooObject;    // and finally this one as well
 }</PRE></DIV>
@@ -2065,7 +2065,7 @@ if (computePedestals() == -1) {
         Consider the following header file:
         <DIV class=""><PRE>constexpr int GlobalScopeValue = 0;
 
-namespace Namespace 
+namespace namespace 
 {
   constexpr int ScopeValue = 1;
 }
