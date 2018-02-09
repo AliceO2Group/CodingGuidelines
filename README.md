@@ -11,14 +11,14 @@ Coding guidelines for the ALICE O2 project.
 
 ClangFormat can be used to format your source code. The configuration file. We provide to files, one for clang 4.4 and one for the versions above. 
 
-* [_clang-format (< 4.5)](https://github.com/AliceO2Group/CodingGuidelines/raw/master/_clang-format-44)
-* [_clang-format (>= 4.5)](https://github.com/AliceO2Group/CodingGuidelines/raw/master/_clang-format-45)
+* [_clang-format (< 4.5)](https://github.com/AliceO2Group/CodingGuidelines/raw/master/_clang-format-3)
+* [_clang-format (>= 4.5)](https://github.com/AliceO2Group/CodingGuidelines/raw/master/_clang-format-4)
 
 To use it (example for SLC6) : 
 ```
 sudo yum install clang
 cd <source code location>
-cp _clang-format-44 ../.clang-format
+cp _clang-format-4 ../.clang-format
 clang-format -style=file -i SOURCEFILE # -i if you want to replace content
 ```
 
