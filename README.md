@@ -3,9 +3,9 @@ Coding guidelines for the ALICE O2 project.
 
 ### Documents
 
-* [Coding guidelines](http://htmlpreview.github.com/?https://github.com/AliceO2Group/CodingGuidelines/blob/master/coding_guidelines.html)
-* [Naming and formatting conventions](http://htmlpreview.github.com/?https://github.com/AliceO2Group/CodingGuidelines/blob/master/naming_formatting.html)
-* [Comments guidelines](http://htmlpreview.github.com/?https://github.com/AliceO2Group/CodingGuidelines/blob/master/comments_guidelines.html)
+* [Coding guidelines](https://rawgit.com/AliceO2Group/CodingGuidelines/master/coding_guidelines.html)
+* [Naming and formatting conventions](https://rawgit.com/AliceO2Group/CodingGuidelines/master/naming_formatting.html)
+* [Comments guidelines](https://rawgit.com/AliceO2Group/CodingGuidelines/master/comments_guidelines.html)
 
 ### ClangFormat
 
