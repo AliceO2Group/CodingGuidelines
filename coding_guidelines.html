@@ -511,8 +511,8 @@ under the <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed
       Let's imagine that your Foo.h looks like this:
       <DIV class=""><PRE class="badcode">class Foo
 {
-  public:
-    Bar getBar();
+ public:
+  Bar getBar();
 }</PRE></DIV>
     </p>
     <p>
@@ -527,8 +527,8 @@ under the <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed
 #include "Bar.h"
 class Foo
 {
-  public:
-    Bar getBar();
+ public:
+  Bar getBar();
 }
 
 // Foo.cxx
@@ -750,16 +750,16 @@ namespace librarian
       class.</p>
       <DIV class=""><PRE>namespace mynamespace 
 {
-  void doGlobalFoo(); // Good -- doGlobalFoo is within a namespace.
+void doGlobalFoo(); // Good -- doGlobalFoo is within a namespace.
   
-  class MyClass 
+class MyClass 
 {
-    public: 
-      ...
-      // Good -- doGlobalBar is a static member of class MyClass and 
-      // has a reason to be part of this class (not shown here).
-      static Bar* doGlobalBar();
-  }</PRE></DIV>
+ public: 
+  ...
+  // Good -- doGlobalBar is a static member of class MyClass and 
+  // has a reason to be part of this class (not shown here).
+  static Bar* doGlobalBar();
+}</PRE></DIV>
     </DIV></DIV>
   </DIV>
 
@@ -941,8 +941,8 @@ MyOtherType object2{"b"};</PRE></DIV></p>
       <DIV class=""><PRE class="badcode">int gBar;           // this is obviously global
 class Something
 {
-  private:
-    static int sId; // but this one too (details at the end of the rule)
+ private:
+  static int sId; // but this one too (details at the end of the rule)
 };
 namespace notglobalscope 
 {
@@ -1117,23 +1117,23 @@ int main()
       Therefore, do this :
       	<DIV class=""><PRE>class Something
 {
-  public:
-    int generateId() {
-      return Something::sId++;
-    }
+ public:
+  int generateId() {
+    return Something::sId++;
+  }
 
-  private:
-    static int sId; // initialized in .cxx
+ private:
+  static int sId; // initialized in .cxx
 };
 </PRE></DIV>
       	instead of :
       	<DIV class=""><PRE class="badcode">class Something
 {
-  public:
-    int generateId() {
-      static int sId = 0;
-      return sId++;
-    }
+ public:
+  int generateId() {
+    static int sId = 0;
+    return sId++;
+  }
 };
 </PRE></DIV>
       	</P>
@@ -1166,12 +1166,12 @@ int main()
 // Goodbye cruel world.</PRE></DIV>
       <DIV class=""><PRE class="badcode">class BreakTheCode
 {
-  public:
-    void setReference(int *value) { mValuePointer = value; }
-    ~BreakTheCode() { *mValuePointer += 2; }
+ public:
+  void setReference(int *value) { mValuePointer = value; }
+  ~BreakTheCode() { *mValuePointer += 2; }
 
-  private:
-    int *mValuePointer = 0;
+ private:
+  int *mValuePointer = 0;
 };
 
 BreakTheCode &amp;globalBreaker()
@@ -1223,16 +1223,16 @@ int main()
         Thus, if there is no explicit initialization of this member variable in the constructor, this assignment will be used for initialization.
         <DIV class=""><PRE>class MyClass 
 {
-  public:
-    MyClass() = default;
-    MyClass(int z) : a(z) {}
+ public:
+  MyClass() = default;
+  MyClass(int z) : a(z) {}
 
-    int data() const {
-      return a;
-    }
+  int data() const {
+    return a;
+  }
 
-  private:
-    int a = 1234;  // in-class initialization
+ private:
+  int a = 1234;  // in-class initialization
 };
 
 int main() 
@@ -1273,9 +1273,9 @@ int main()
         <DIV class=""><PRE>// MyClass.h
 class MyClass 
 {
-// ...
-  private:
-    int mValue = 1234;
+ // ...
+ private:
+  int mValue = 1234;
 };</PRE></DIV>
         <p>
          Initialization list:
@@ -1283,10 +1283,10 @@ class MyClass
         <DIV class=""><PRE>// MyClass.h
 class MyClass : public MyBase  
 {
-  // ...
-  private:
-    int mValue;
-    std::vector mVector;
+ // ...
+ private:
+  int mValue;
+  std::vector mVector;
 };
 // MyClass.cxx
 MyClass::MyClass()
@@ -1338,11 +1338,12 @@ MyClass::MyClass()
       <DIV class=""><PRE class="badcode">// MyClass.h
 class MyClass 
 {
-  public:
-    MyClass();
-    ~MyClass();
-  private:
-    Something* mSomething;  // raw pointer
+ public:
+  MyClass();
+  ~MyClass();
+ 
+ private:
+  Something* mSomething;  // raw pointer
 };
 // MyClass.cxx
 MyClass::MyClass()
@@ -1358,11 +1359,11 @@ MyClass::~MyClass()
       <DIV class=""><PRE>// MyClass.h
 class MyClass 
 {
-  public:
-    MyClass();
-    ~MyClass() = delete;   // mSomething is deleted automatically
-  private:
-    std::unique_ptr&lt;Something&gt; mSomething; // smart pointer
+ public:
+  MyClass();
+  ~MyClass() = delete;   // mSomething is deleted automatically
+ private:
+  std::unique_ptr&lt;Something&gt; mSomething; // smart pointer
 };
 // MyClass.cxx
 MyClass::MyClass()
@@ -1394,15 +1395,15 @@ MyClass::MyClass()
       Calling a virtual function non-virtually is fine:
         <DIV class=""><PRE class="badcode">class MyClass 
 {
-  public:
-    MyClass() { doSomething(); }    // Bad
-    virtual void doSomething();
+ public:
+  MyClass() { doSomething(); }    // Bad
+  virtual void doSomething();
 };</PRE></DIV>
         <DIV class=""><PRE>class MyClass 
 {
-  public:
-    MyClass() { MyClass::doSomething(); }    // Good
-    virtual void doSomething();
+ public:
+  MyClass() { MyClass::doSomething(); }    // Good
+  virtual void doSomething();
 };</PRE></DIV>
       </p>
       <P class="">
@@ -1428,8 +1429,8 @@ MyClass::MyClass()
         as a conversion.  For instance, if you define
         <DIV class=""><PRE class="badcode">class Foo 
 {
-  public:
-    Foo(const std::string &amp;name);
+ public:
+  Foo(const std::string &amp;name);
 };</PRE></DIV>
         and then pass a string to a
         function that expects a <code>Foo</code>, the constructor will
@@ -1439,10 +1440,10 @@ MyClass::MyClass()
         an implicit conversion.
         <DIV class=""><PRE>class MyClass 
 {
-  public:
-    explicit MyClass(int number); //allocate number bytes 
-    explicit MyClass(const std::string &amp;name); // initialize with string name
-  };</PRE></DIV>
+ public:
+  explicit MyClass(int number); //allocate number bytes 
+  explicit MyClass(const std::string &amp;name); // initialize with string name
+ };</PRE></DIV>
       </P>
       <P class="">
 <SPAN class="stylepoint_section">Decision:  </SPAN>
@@ -1563,17 +1564,17 @@ Foo::Foo() : Foo("example") { }</PRE></DIV>
         </p>
         <DIV class=""><PRE>class Base 
 {
-  public:
-    Base();
-    explicit Base(int number);
-    explicit Base(const string&amp; name);
-    ...
+ public:
+  Base();
+  explicit Base(int number);
+  explicit Base(const string&amp; name);
+  ...
 };
 
 class Derived : public Base 
 {
-  public:
-    using Base::Base;  // Base's constructors are redeclared here.
+ public:
+  using Base::Base;  // Base's constructors are redeclared here.
 };</PRE></DIV>
         <p>
           This is especially useful when <code>Derived</code>'s constructors
@@ -2241,9 +2242,9 @@ static constexpr double Centimeter  = 10.*Millimeter;</PRE></DIV>
       <DIV class=""><PRE>// File Widget.h
 class Widget 
 {
-  private:
-    static const int sDefaultWidth;           // value provided in definition
-    static constexpr int DefaultHeight = 600; // value provided in declaration
+ private:
+  static const int sDefaultWidth;           // value provided in definition
+  static constexpr int DefaultHeight = 600; // value provided in declaration
 };          </PRE></DIV>
       <DIV class=""><PRE>// File Widget.cxx
 const int Widget::sDefaultWidth = 800; // value provided in definition

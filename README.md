@@ -11,32 +11,15 @@ Coding guidelines for the ALICE O2 project.
 
 ### ClangFormat
 
-ClangFormat can be used to format your source code. The configuration file. We provide to files, one for clang 4.4 and one for the versions above. 
-
-* [_clang-format (< 4.5)](https://github.com/AliceO2Group/CodingGuidelines/raw/master/_clang-format-3)
-* [_clang-format (>= 4.5)](https://github.com/AliceO2Group/CodingGuidelines/raw/master/_clang-format-4)
-
-To use it (example for SLC6) : 
-```
-sudo yum install clang
-cd <source code location>
-cp _clang-format-4 ../.clang-format
-clang-format -style=file -i SOURCEFILE # -i if you want to replace content
-```
+ClangFormat can be used to format your source code. See instructions in the [AliceO2 repo README](https://github.com/AliceO2Group/AliceO2/).
 
 ### Configuration files for editors
-#### Eclipse
-
-1. [Download](https://github.com/AliceO2Group/CodingGuidelines/raw/master/Eclipse_O2_formatting.xml),
-2. Go to Project->Properties->C/C++ General->Formatter,
-2. Select the option "Enable project specific settings",
-3. Click on the "Import..." button.
 
 #### CLion
-1. [Download](https://github.com/AliceO2Group/CodingGuidelines/raw/master/settings-codestyle-clion.jar),
+1. [Download](https://github.com/AliceO2Group/CodingGuidelines/raw/master/settings-o2-codestyle-clion.jar),
 2. Go to File -> Import Settings. 
 
 ## FAQ
 * __Q__ I strongly disagree with rule X !
-* __A__ Feel free to contact the CWG11 (alice-o2-cwg11@cern.ch) to share your concern(s). Rules have already been amended, abandoned or added based on the users feedback. However, please comply with the rules until a change is agreed by CWG11.
+* __A__ Feel free to contact the WP3 (alice-o2-wp3@cern.ch) to share your concern(s). Rules have already been amended, abandoned or added based on the users feedback. However, please comply with the rules until a change is agreed by CWG11.
  
