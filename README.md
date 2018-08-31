@@ -14,12 +14,6 @@ Coding guidelines for the ALICE O2 project.
 ClangFormat can be used to format your source code. See instructions in the [AliceO2 repo README](https://github.com/AliceO2Group/AliceO2/).
 
 ### Configuration files for editors
-#### Eclipse
-
-1. [Download](https://github.com/AliceO2Group/CodingGuidelines/raw/master/Eclipse_O2_formatting.xml),
-2. Go to Project->Properties->C/C++ General->Formatter,
-2. Select the option "Enable project specific settings",
-3. Click on the "Import..." button.
 
 #### CLion
 1. [Download](https://github.com/AliceO2Group/CodingGuidelines/raw/master/settings-o2-codestyle-clion.jar),
