@@ -453,9 +453,9 @@ class UrlTableInterface
         </p>
         <DIV class=""><PRE>class Something 
 {
-  private:
-    string mTableName;      
-    static int sGlobalState;
+ private:
+  string mTableName;      
+  static int sGlobalState;
 };</PRE></DIV>
       </P>
 
@@ -548,12 +548,12 @@ deleteUrl();</PRE></DIV>
         </p>
         <DIV class=""><PRE>class MyClass 
 {
-  public:
-  ...
-    int getNumberOfEntries() const { return mNumberOfEntries; }
-    void setNumberOfEntries(int numberOfEntries) { mNumberOfEntries = numEntries; }
-  private:
-    int mNumberOfEntries;
+ public:
+ ...
+  int getNumberOfEntries() const { return mNumberOfEntries; }
+  void setNumberOfEntries(int numberOfEntries) { mNumberOfEntries = numEntries; }
+ private:
+  int mNumberOfEntries;
 };</PRE></DIV>
       </P>
       <P class="">
@@ -568,11 +568,11 @@ bool hasZero();</PRE></DIV>
           </p>
           <DIV class=""><PRE>class MyClass 
 {
-  public:
-    void setValid(bool isValid) const { mValid = isValid; }
-    bool isValid() const { return mValid; }
-  private:
-    bool mValid;
+ public:
+  void setValid(bool isValid) const { mValid = isValid; }
+  bool isValid() const { return mValid; }
+ private:
+  bool mValid;
 };</PRE></DIV>
       </P>
     </DIV></DIV>
@@ -944,8 +944,8 @@ std::vector&lt;int&gt; v{ 10, 20 }; // calls vector(std::initializer_list&lt;int
           link
         </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Classes')" name="Classes__button" id="Classes__button">▶</SPAN>
     <DIV style="display:inline;" class="">
-      Access specifiers in a class or a struct are indented by 2 spaces. 
-      The sections they delimit are themselves indented by 2 more spaces.
+      Access specifiers in a class or a struct are indented by 1 space. 
+      The sections they delimit are themselves indented by 1 more space for a total of 2 spaces.
     </DIV>
     <DIV class=""><DIV class="stylepoint_body" name="Classes__body" id="Classes__body" style="display: none">
       <p>
@@ -953,19 +953,19 @@ std::vector&lt;int&gt; v{ 10, 20 }; // calls vector(std::initializer_list&lt;int
       </p>
       <DIV class=""><PRE>class MyClass : public BaseClass 
 {
-  public:         // 2 spaces indent.
-    MyClass();    // 4 spaces indent.
-    ~MyClass() {}
+ public:         // 1 spaces indent.
+  MyClass();    // 2 spaces indent.
+  ~MyClass() {}
 
-    void someFunction();
-    void someFunctionThatDoesNothing() {}
-    void setSomeValue(int value) { mSomeValue = value; }
+  void someFunction();
+  void someFunctionThatDoesNothing() {}
+  void setSomeValue(int value) { mSomeValue = value; }
 
-  private:
-    bool someInternalFunction(); // notice that the method is before the data members
+ private:
+  bool someInternalFunction(); // notice that the method is before the data members
 
-    int mSomeValue;
-    int mSomeOtherValue;
+  int mSomeValue;
+  int mSomeOtherValue;
 };</PRE></DIV>
       <p>
       Things to note:
@@ -999,14 +999,14 @@ std::vector&lt;int&gt; v{ 10, 20 }; // calls vector(std::initializer_list&lt;int
 	 In certain situations you might need to use a different declaration order. For example, when using <code>decltype</code> :
 	 <DIV class=""><PRE>class A 
 {
-  private:             // Early declaration of a private data member
-    int x;
+ private:             // Early declaration of a private data member
+  int x;
 
-  public:     
-    decltype(x) foo(); // Needs x to be already declared
+ public:     
+  decltype(x) foo(); // Needs x to be already declared
 	     
-  private:             // the rest of the private section
-    float y;
+ private:             // the rest of the private section
+  float y;
 };
 </PRE></DIV>
       
