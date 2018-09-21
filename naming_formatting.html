@@ -826,19 +826,18 @@ int* valuePointer = &amp;value;
 int value = myObject-&gt;getValue();
 int value = myStruct.value;</PRE></DIV>
       <p>
-        When declaring a pointer or reference there are two widely used and equivalent methods: one, usually preferred in the C++ community, and another, 
-        introduced by Kerningham and Ritchie (the founders of C). 
+        When declaring a pointer or reference, the `*` or `&` goes with the type. .
       </p>
-      <DIV class=""><PRE>// Good.
-
+      <DIV class=""><PRE>
 // Pointers      
 char* myCharacter;  // typical C++ notation
 char *myCharacter;  // Kerningham &amp; Ritchie's  notation
 
 // References
-const string&amp; myString;
-const string &amp;myString;</PRE></DIV>
+const string&amp; myString;</PRE></DIV>
       <DIV class=""><PRE class="badcode">char * myCharacter;       // Bad - spaces on both sides of *
+          char *myCharacter;  // Bad - space before the *, the * is with the variable name.
+const string &amp;myString;   // Bad - the & is with the variable name.
 const string &amp; myString;  // Bad - spaces on both sides of &amp;</PRE></DIV>
     </DIV></DIV>
  </DIV>
