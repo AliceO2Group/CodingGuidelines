@@ -1,0 +1,22 @@
+language: bash
+script:
+  echo "Nothing to do"
+after_success: |
+  set -e
+  curl -L https://github.com/github/hub/releases/download/v2.6.0/hub-linux-amd64-2.6.0.tgz | tar xz
+  MESSAGE="Align Clang Format to upstream"
+  REPOS=Common
+  ORG=${TRAVIS_REPO_SLUG%%/*}
+  for REPO in $REPOS; do
+    git clone git://github.com/$ORG/$REPO
+    cp .clang-format $REPO
+    pushd $REPO
+      git remote
+      git config user.email ${TRAVIS_SECURE_EMAIL}
+      git config user.name ${TRAVIS_SECURE_USER}
+      git add .clang-format
+      git commit -m "${MESSAGE}"
+      git push "https://${TRAVIS_SECURE_TOKEN_NAME}@github.com/$ORG/$REPO" HEAD:refs/heads/coding-guidelines-update > /dev/null 2>&1
+      GITHUB_TOKEN=${TRAVIS_SECURE_TOKEN_NAME} ../hub-linux-amd64-2.6.0/bin/hub pull-request -h coding-guidelines-update -b master -m "Coding Guidelines update of $(date +%Y-%m-%d)"
+    popd
+  done
