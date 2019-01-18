@@ -5,7 +5,7 @@ after_success: |
   set -e
   curl -L https://github.com/github/hub/releases/download/v2.6.0/hub-linux-amd64-2.6.0.tgz | tar xz
   MESSAGE="Align Clang Format to upstream"
-  REPOS="Common AliceO2 InfoLogger QualityControl Monitoring"
+  REPOS="Common ReadoutCard AliceO2 InfoLogger QualityControl Monitoring"
   ORG=${TRAVIS_REPO_SLUG%%/*}
   for REPO in $REPOS; do
     git clone git://github.com/$ORG/$REPO
