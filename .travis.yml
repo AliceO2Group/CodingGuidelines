@@ -16,7 +16,7 @@ after_success: |
       git config user.name ${TRAVIS_SECURE_USER}
       git add .clang-format
       git commit -m "${MESSAGE}"
-      git push "https://${TRAVIS_SECURE_TOKEN_NAME}@github.com/$ORG/$REPO" HEAD:refs/heads/coding-guidelines-update > /dev/null 2>&1
-      GITHUB_TOKEN=${TRAVIS_SECURE_TOKEN_NAME} ../hub-linux-amd64-2.6.0/bin/hub pull-request -h coding-guidelines-update -b master -m "Coding Guidelines update of $(date +%Y-%m-%d)"
+      git push "https://${TRAVIS_SECURE_TOKEN_NAME}@github.com/$ORG/$REPO" HEAD:refs/heads/coding-guidelines-update -f > /dev/null 2>&1
+      GITHUB_TOKEN=${TRAVIS_SECURE_TOKEN_NAME} ../hub-linux-amd64-2.6.0/bin/hub pull-request -h coding-guidelines-update -b master -m "Coding Guidelines update of $(date +%Y-%m-%d)" || true
     popd
   done
