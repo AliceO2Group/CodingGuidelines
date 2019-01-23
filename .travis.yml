@@ -7,12 +7,14 @@ after_success: |
   MESSAGE="Align Clang Format to upstream"
   REPOS="Common ReadoutCard AliceO2 InfoLogger QualityControl Monitoring Readout Configuration"
   ORG=${TRAVIS_REPO_SLUG%%/*}
-  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep .clang-format ; then
+  # We only build if the change involves .clang-format or .travis.yml. The latter
+  # is to make sure that when we add new repositories we resync.
+  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep -e "\(.clang-format\|.travis.yml\)" ; then
     for REPO in $REPOS; do
+      echo Processing $REPO
       git clone git://github.com/$ORG/$REPO
       cp .clang-format $REPO
       pushd $REPO
-        git remote
         git config user.email ${TRAVIS_SECURE_EMAIL}
         git config user.name ${TRAVIS_SECURE_USER}      
         if git add .clang-format && git commit -m "${MESSAGE}"; then
