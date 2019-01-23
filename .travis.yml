@@ -20,3 +20,6 @@ after_success: |
       fi
     popd
   done
+branches:
+  only:
+  - master
