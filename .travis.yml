@@ -7,19 +7,21 @@ after_success: |
   MESSAGE="Align Clang Format to upstream"
   REPOS="Common ReadoutCard AliceO2 InfoLogger QualityControl Monitoring Readout Configuration"
   ORG=${TRAVIS_REPO_SLUG%%/*}
-  for REPO in $REPOS; do
-    git clone git://github.com/$ORG/$REPO
-    cp .clang-format $REPO
-    pushd $REPO
-      git remote
-      git config user.email ${TRAVIS_SECURE_EMAIL}
-      git config user.name ${TRAVIS_SECURE_USER}      
-      if git add .clang-format && git commit -m "${MESSAGE}"; then
-        git push "https://${TRAVIS_SECURE_TOKEN_NAME}@github.com/$ORG/$REPO" HEAD:refs/heads/coding-guidelines-update -f > /dev/null 2>&1
-        GITHUB_TOKEN=${TRAVIS_SECURE_TOKEN_NAME} ../hub-linux-amd64-2.6.0/bin/hub pull-request -h coding-guidelines-update -b master -m "Coding Guidelines update of $(date +%Y-%m-%d)" || true
-      fi
-    popd
-  done
+  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep .clang-format ; then
+    for REPO in $REPOS; do
+      git clone git://github.com/$ORG/$REPO
+      cp .clang-format $REPO
+      pushd $REPO
+        git remote
+        git config user.email ${TRAVIS_SECURE_EMAIL}
+        git config user.name ${TRAVIS_SECURE_USER}      
+        if git add .clang-format && git commit -m "${MESSAGE}"; then
+          git push "https://${TRAVIS_SECURE_TOKEN_NAME}@github.com/$ORG/$REPO" HEAD:refs/heads/coding-guidelines-update -f > /dev/null 2>&1
+          GITHUB_TOKEN=${TRAVIS_SECURE_TOKEN_NAME} ../hub-linux-amd64-2.6.0/bin/hub pull-request -h coding-guidelines-update -b master -m "Coding Guidelines update of $(date +%Y-%m-%d)" || true
+        fi
+      popd
+    done
+  fi
 branches:
   only:
   - master
