@@ -1,4 +1,7 @@
 language: bash
+branches:
+  only:
+    - master
 script:
   echo "Nothing to do"
 after_success: |
