@@ -563,7 +563,17 @@ class Foo
     <p> 
       Example of a typical class definition within a project and
       sub-project namespace:
-    </p> 
+    </p>
+        <DIV class=""><PRE>namespace project::subproject
+{
+
+class MyClass
+{
+...
+};
+
+} // namespace subproject::project</PRE></DIV>
+        <p>Alternatively, the C++98/11/14 style for nested namespaces can be used:</p>
       <DIV class=""><PRE>namespace project
 {
 namespace subproject
