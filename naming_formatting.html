@@ -172,7 +172,18 @@ under the <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed
 <TR valign="top" class="">
 <TD><DIV class="toc_category"><A href="#Naming">Naming</A></DIV></TD>
 <TD><DIV class="toc_stylepoint">
-<SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#General_Naming_Rules">General Naming Rules</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#File_Names">File Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Type_Names">Type Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Interface_Names">Interface Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Variable_Names">Variable Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Function_Names">Function Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Namespace_Names">Namespace Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Enumerator_Names">Enumerator Names</A></SPAN> <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Macro_Names">Macro Names</A></SPAN> </DIV></TD>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#General_Naming_Rules">General Naming Rules</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#File_Names">File Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Executable_Names">Executable Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Type_Names">Type Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Interface_Names">Interface Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Variable_Names">Variable Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Function_Names">Function Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Namespace_Names">Namespace Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Enumerator_Names">Enumerator Names</A></SPAN>
+            <SPAN style="padding-right: 1em; white-space:nowrap;" class=""><A href="#Macro_Names">Macro Names</A></SPAN>
+</DIV>
+</TD>
 </TR>
 <TR valign="top" class="">
 <TD><DIV class="toc_category"><A href="#Formatting">Formatting</A></DIV></TD>
@@ -372,6 +383,33 @@ testMyClass.cxx // Test program</PRE></DIV>
       </p>
     </DIV></DIV>
   </DIV>
+
+    <div class="">
+      <h3>
+        <a name="Executable_Names" id="Executable_Names">Executable Names</a>
+      </h3>
+      <span class="link_button" id="link-Executable_Names__button" name="link-Executable_Names__button">
+        <a href="?showone=Executable_Names#Executable_Names">link</a>
+      </span>
+      <span class="showhide_button" onclick="javascript:ShowHideByName('Executable_Names')" name="Executable_Names__button" id="Executable_Names__button">▶</span>
+      <div style="display:inline;" class="">
+        Executable names should be in lowercase, prefixed with <code>o2</code>, and hyphenated : <code>o2-tpc-reco-workflow</code>
+      </div>
+      <div class="">
+        <div class="stylepoint_body" name="Executable_Names__body" id="Executable_Names__body" style="display: none">
+          <p>When applicable, the <code>o2</code> prefix is immediately followed by the subsystem short name.</p>
+          <p>For example:</p>
+          <pre>
+o2-sim
+o2-conditions-client
+o2-digitizer-workflow
+o2-tpc-reco-workflow
+o2-tpc-monitor
+o2-flp-sender-device
+          </pre>
+        </div>
+      </div>
+    </div>
 
   <DIV class="">
 <H3><A name="Type_Names" id="Type_Names">Type Names</A></H3>
