@@ -26,7 +26,7 @@ aliBuild build --defaults o2 Clang
 ```
 2. Load clang and clang-format
 ```bash
-alienv load Clang/latest
+alienv enter Clang/latest
 ```
 3. Install git-clang-format
 ```bash
