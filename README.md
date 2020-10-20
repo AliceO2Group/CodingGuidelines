@@ -38,6 +38,9 @@ chmod u+x git-clang-format
 ```
 
 #### Check files' formatting
+The commands below rely on the [.clang-format](.clang-format) file located in one of the parent
+directories of the source files.
+
 Show correctly formatted version of a file :
 ```
 clang-format -style=file SOURCEFILE
