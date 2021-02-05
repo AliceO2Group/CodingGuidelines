@@ -37,7 +37,20 @@ wget llvm.org/svn/llvm-project/cfe/trunk/tools/clang-format/git-clang-format
 chmod u+x git-clang-format
 ```
 
+#### Check commits' formatting
+`git clang-format` invokes `clang-format` on the changes in current files
+or a specific commit. E.g. for the last commit
+```
+git clang-format HEAD~1
+```
+
+Or for all commits done with respect to the remote branch state
+```
+git clang-format origin/dev
+```
+
 #### Check files' formatting
+Please note that for technical reasons, there are slight differences between `clang-format` and `git-clang-format` (see above). All pull requests are checked with `git-clang-format` as described in the previous bullet. Thus make sure that before pushing code, correct the formatting with `git-clang-format`. The instructions for `clang-format` are left here only for reference.
 Show correctly formatted version of a file :
 ```
 clang-format -style=file SOURCEFILE
@@ -57,18 +70,6 @@ find . -iname "*.h" -o -iname "*.cpp" | xargs clang-format -style=file -i
 Display what needs to be fixed in a file : 
 ```
 clang-format -style=file <SOURCEFILE> | diff <SOURCEFILE> -
-```
-
-#### Check commits' formatting
-`git clang-format` invokes `clang-format` on the changes in current files
-or a specific commit. E.g. for the last commit
-```
-git clang-format HEAD~1
-```
-
-Or for all commits done with respect to the remote branch state
-```
-git clang-format origin/dev
 ```
 
 #### Using an IDE
