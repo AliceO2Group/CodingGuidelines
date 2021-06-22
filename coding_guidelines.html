@@ -1897,13 +1897,18 @@ class Derived : public Base
           link
         </A></SPAN><SPAN class="showhide_button" onclick="javascript:ShowHideByName('Exceptions')" name="Exceptions__button" id="Exceptions__button">▶</SPAN>
     <DIV style="display:inline;" class="">
-      Use C++ exceptions instead of return codes for error handling. Do not use exceptions to return values. 
+      C++ exceptions can be used for error handling in non-performance-relevant code, like context initialization running only once during the lifetime of the program.
+      Usually return values shall be used.
     </DIV>
     <DIV class=""><DIV class="stylepoint_body" name="Exceptions__body" id="Exceptions__body" style="display: none">
       <p>
-        Exceptions should be used for error handling. <br>
-        Exception classes typically derive from <code>std::exception</code> (or one of its subclasses like <code>std::runtime_error</code>).<br> 
-        Exceptions should be scoped inside the class that throws them.<br> 
+        Exceptions should be used only when it is guaranteed that they cannot affect the performance, otherwise use return values. <br>
+	Use exceptions mainly for errors that shall terminate the application (<code>std::bad_alloc</code>, <code>std::runtime_error("not implemented")</code>, ...) <br>
+	If exception handling is needed, don't use generic or standard types for that (<code>int</code>, <code>std::bad_alloc</code>), but create your own type which is only used by youself, to avoid conflicts. <br>
+	Your class can typically derive from <code>std::exception</code> (or one of its subclasses like <code>std::runtime_error</code>).<br>
+        Exceptions should be scoped inside the class that throws them.<br>
+	Catch only your custom exceptions. In particular, try to avoid catchalls, but if they are absolutely necessary, rethrow afterwards, and add an option (e.g. environment variable) to disable the catchall.<br>
+	For code inside O2 (or having O2 as dependency), consider using <code>o2::framework::runtime_error</code>, which provides automatic stacktraces and formatting.<br>
         By default, catch exceptions by reference.<br> 
         <DIV class=""><PRE>int computePedestals()
 {
