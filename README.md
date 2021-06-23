@@ -50,7 +50,12 @@ git clang-format origin/dev
 ```
 
 #### Check files' formatting
+
+The commands below rely on the [.clang-format](.clang-format) file located in one of the parent
+directories of the source files.
+
 Please note that for technical reasons, there are slight differences between `clang-format` and `git-clang-format` (see above). All pull requests are checked with `git-clang-format` as described in the previous bullet. Thus make sure that before pushing code, correct the formatting with `git-clang-format`. The instructions for `clang-format` are left here only for reference.
+
 Show correctly formatted version of a file :
 ```
 clang-format -style=file SOURCEFILE
