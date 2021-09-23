@@ -81,7 +81,7 @@ clang-format -style=file <SOURCEFILE> | diff <SOURCEFILE> -
 A number of config files are available [here](https://github.com/AliceO2Group/CodingGuidelines) for various IDEs.
 
 ### O2 code checker
-All the AliceO2 pull requests are subject to be tested with [O2 CodeChecker](https://github.com/AliceO2Group/O2CodeChecker#readme) during  `build/O2/fullCI` check. It is a bit stricter tool than `clang-format`. Contributors are encouraged to run the codecheck locally before creating pull request in order to save checking time and CPU resources of testing facilities. Try to run it in root directory of your installation:
+All the AliceO2 pull requests are subject to be tested with [O2 CodeChecker](https://github.com/AliceO2Group/O2CodeChecker#readme) during  `build/O2/fullCI` check. It is a bit stricter tool than `clang-format`. Contributors are encouraged to run the codecheck locally before creating a pull request in order to save checking time and CPU resources of the testing facilities. Try to run it in the root directory of your installation:
 ```
 aliBuild build o2checkcode --defaults o2
 ```
