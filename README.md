@@ -81,9 +81,25 @@ clang-format -style=file <SOURCEFILE> | diff <SOURCEFILE> -
 A number of config files are available [here](https://github.com/AliceO2Group/CodingGuidelines) for various IDEs.
 
 ### O2 code checker
-All the AliceO2 pull requests are being tested with [O2 CodeChecker](https://github.com/AliceO2Group/O2CodeChecker#readme) during  `build/O2/fullCI` check. It is a bit more strict tool than `clang-format`. Contributors are encouraged to run the codecheck locally before proposing pull request in order to save checking time and CPU resources of testing facilities. Try to run it in root directory of your installation:
+All the AliceO2 pull requests are subject to be tested with [O2 CodeChecker](https://github.com/AliceO2Group/O2CodeChecker#readme) during  `build/O2/fullCI` check. It is a bit stricter tool than `clang-format`. Contributors are encouraged to run the codecheck locally before creating pull request in order to save checking time and CPU resources of testing facilities. Try to run it in root directory of your installation:
 ```
 aliBuild build o2checkcode --defaults o2
+```
+In case of success you'll be informed of it:
+```
+==> Build of o2checkcode successfully completed on `your-pc-name'.
+```
+Otherwise an ERROR messages will appear:
+```
+==> Building o2checkcode@1.0
+==> o2checkcode is being built (use --debug for full output): failed
+ERROR: Error while executing /your/path/sw/SPECS/ubuntu2004_x86-64/o2checkcode/1.0-local1/build.sh on `your-pc-name'.
+ERROR: Log can be found in /your/path/sw/BUILD/o2checkcode-latest/log
+```
+You'll find details of the problem at the end of logfile: `/your/path/sw/BUILD/o2checkcode-latest/log`. For example:
+```
+========== List of errors found ==========
+/sw/SOURCES/O2/7084-slc8_x86-64/0/Detectors/CPV/calib/include/CPVCalibration/PedestalCalibrator.h:78:3: error: use '= default' to define a trivial destructor [modernize-use-equals-default]
 ```
 
 ### Configuration files for editors
