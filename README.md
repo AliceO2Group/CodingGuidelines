@@ -5,9 +5,9 @@ Coding guidelines for the ALICE O2 project.
 
 ### Documents
 
-* [Coding guidelines](https://rawgit.com/AliceO2Group/CodingGuidelines/master/coding_guidelines.html)
-* [Naming and formatting conventions](https://rawgit.com/AliceO2Group/CodingGuidelines/master/naming_formatting.html)
-* [Comments guidelines](https://rawgit.com/AliceO2Group/CodingGuidelines/master/comments_guidelines.html)
+* [Coding guidelines](https://aliceo2group.github.io/CodingGuidelines/coding_guidelines.html)
+* [Naming and formatting conventions](https://aliceo2group.github.io/CodingGuidelines/naming_formatting.html)
+* [Comments guidelines](https://aliceo2group.github.io/CodingGuidelines/comments_guidelines.html)
 
 ### Formatting tool
 The ALICE O2 projects use `clang-format` to push for a common code formatting. The rules are defined in
